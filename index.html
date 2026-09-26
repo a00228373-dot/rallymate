@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#03050c">
 <meta name="color-scheme" content="dark">
 <title>Rally de Matemáticas — Tec de Monterrey</title>
@@ -21,70 +21,56 @@
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
 
   <!-- ===================================================== -->
-  <!-- SPLASH SCREEN CON ANIMACIÓN "MATEMÁTICAS" GIGANTE      -->
+  <!-- SPLASH SCREEN ANIMACIÓN FLUIDA Y CENTRADA            -->
   <!-- ===================================================== -->
   <div id="splashScreen" class="splash-screen">
     <div class="splash-grid"></div>
     <div class="splash-glow"></div>
 
     <div class="svg-logo-container">
-      <svg class="splash-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+      <svg class="splash-svg" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- Degradado inicial -->
+          <!-- Degradados optimizados -->
           <linearGradient id="mathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#00f5ff" />
             <stop offset="100%" stop-color="#8b5cf6" />
           </linearGradient>
 
-          <!-- Degradados para los Anillos Azules -->
           <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="#00f5ff" stop-opacity="1" />
-            <stop offset="60%" stop-color="#0057ff" stop-opacity="0.5" />
-            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+            <stop offset="100%" stop-color="#0057ff" stop-opacity="0.2" />
           </linearGradient>
 
           <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#0057ff" stop-opacity="0.9" />
-            <stop offset="50%" stop-color="#00f5ff" stop-opacity="0.6" />
-            <stop offset="100%" stop-color="#0057ff" stop-opacity="0.1" />
+            <stop offset="100%" stop-color="#00f5ff" stop-opacity="0.2" />
           </linearGradient>
-
-          <!-- Filtro Neón -->
-          <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="6" result="blur1" />
-            <feGaussianBlur stdDeviation="14" result="blur2" />
-            <feMerge>
-              <feMergeNode in="blur2" />
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         <!-- GRUPO SECUNDARIO: Anillos, Sigma y Textos Auxiliares (SE DESVANECEN) -->
         <g class="splash-fade-group">
-          <!-- Anillos Azules en Giro -->
+          <!-- Anillos Azules -->
           <g class="orbit-group">
-            <circle class="orbit-ring ring-outer" cx="300" cy="90" r="72" />
-            <circle class="orbit-ring ring-mid" cx="300" cy="90" r="58" />
-            <circle class="orbit-ring ring-inner" cx="300" cy="90" r="44" />
+            <circle class="orbit-ring ring-outer" cx="300" cy="85" r="65" />
+            <circle class="orbit-ring ring-mid" cx="300" cy="85" r="50" />
+            <circle class="orbit-ring ring-inner" cx="300" cy="85" r="38" />
           </g>
 
-          <!-- Símbolo Σ Neón -->
-          <path class="sigma-symbol" filter="url(#neonGlow)"
-                d="M275 56 H325 V68 L294 90 L325 112 V124 H275 V112 H308 L281 90 L308 68 H275 Z"
+          <!-- Símbolo Σ -->
+          <path class="sigma-symbol"
+                d="M278 55 H322 V66 L295 85 L322 104 V115 H278 V104 H307 L283 85 L307 66 H278 Z"
                 fill="#00f5ff" />
 
           <!-- Texto "Rally de" -->
-          <text x="282" y="215" class="svg-text rally-text" text-anchor="end">Rally de</text>
+          <text x="285" y="195" class="svg-text rally-text" text-anchor="end">Rally de</text>
 
           <!-- Subtítulo "TEC DE MONTERREY" -->
-          <text x="300" y="265" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
+          <text x="300" y="245" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
         </g>
 
-        <!-- GRUPO PRINCIPAL: "MATEMÁTICAS" (CRECE, SE HACE AZUL Y SE EXPANDE EN TODA LA PANTALLA) -->
+        <!-- GRUPO PRINCIPAL: "MATEMÁTICAS" (CRECE Y SE CENTRA DE FORMA FLUIDA) -->
         <g class="math-expand-group">
-          <text x="296" y="215" class="svg-text math-text" text-anchor="start">Matemáticas</text>
+          <text x="295" y="195" class="svg-text math-text" text-anchor="start">Matemáticas</text>
         </g>
       </svg>
     </div>
