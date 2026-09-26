@@ -1,9 +1,9 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   JavaScript: Sonidos Futuristas + Pop + Partículas Celular
+   JavaScript: Secuencia del Venado + Sonidos + Firebase
    ===================================================== */
 
-/* 1) SINTETIZADOR DE AUDIO FUTURISTA Y EFECTOS DE SONIDO (Web Audio API) */
+/* 1) SINTETIZADOR DE AUDIO FUTURISTA */
 const AudioFX = {
   ctx: null,
   init() {
@@ -16,56 +16,56 @@ const AudioFX = {
     }
   },
 
-  // Sonido potente al expandirse la palabra "Matemáticas"
+  // Sonido futurista potente al expandirse el venado
   playMathExpansion() {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
 
-    // Barrido de frecuencia resonante de alta energía
+    // Barrido resonante de sintetizador
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
 
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(110, now);
-    osc.frequency.exponentialRampToValueAtTime(1200, now + 1.1);
+    osc.frequency.exponentialRampToValueAtTime(1400, now + 1.2);
 
     filter.type = "lowpass";
-    filter.frequency.setValueAtTime(200, now);
-    filter.frequency.exponentialRampToValueAtTime(4500, now + 0.9);
-    filter.Q.setValueAtTime(6, now);
+    filter.frequency.setValueAtTime(180, now);
+    filter.frequency.exponentialRampToValueAtTime(5000, now + 1.0);
+    filter.Q.setValueAtTime(7, now);
 
     gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.28, now + 0.3);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    gain.gain.linearRampToValueAtTime(0.32, now + 0.35);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 1.5);
+    osc.stop(now + 1.6);
 
-    // Sub-impacto espacial
+    // Sub-impacto cinemático de graves
     const sub = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
     sub.type = "sine";
-    sub.frequency.setValueAtTime(60, now);
-    sub.frequency.exponentialRampToValueAtTime(180, now + 0.3);
-    sub.frequency.exponentialRampToValueAtTime(35, now + 1.2);
+    sub.frequency.setValueAtTime(65, now);
+    sub.frequency.exponentialRampToValueAtTime(220, now + 0.25);
+    sub.frequency.exponentialRampToValueAtTime(30, now + 1.4);
 
-    subGain.gain.setValueAtTime(0.3, now);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+    subGain.gain.setValueAtTime(0.35, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
 
     sub.connect(subGain);
     subGain.connect(this.ctx.destination);
 
     sub.start(now);
-    sub.stop(now + 1.3);
+    sub.stop(now + 1.4);
   },
 
-  // Sonido de "POP" para la ventana/acción de Agregar Equipo
+  // Sonido de "POP" para agregar equipo / modal
   playPop() {
     this.init();
     if (!this.ctx) return;
@@ -75,10 +75,10 @@ const AudioFX = {
     const gain = this.ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(700, now);
-    osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    osc.frequency.setValueAtTime(750, now);
+    osc.frequency.exponentialRampToValueAtTime(130, now + 0.08);
 
-    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.setValueAtTime(0.32, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
     osc.connect(gain);
@@ -88,14 +88,14 @@ const AudioFX = {
     osc.stop(now + 0.09);
   },
 
-  // Sonido futurista al sumar / restar puntos
+  // Sonido al sumar / restar puntos
   playPointChime(isPositive = true) {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
 
     const freqs = isPositive
-      ? [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6
+      ? [523.25, 659.25, 783.99, 1046.50]
       : [440.00, 370.00, 311.13, 220.00];
 
     freqs.forEach((freq, index) => {
@@ -117,7 +117,6 @@ const AudioFX = {
   }
 };
 
-/* Activar AudioContext al primer toque/click */
 window.addEventListener("pointerdown", () => AudioFX.init(), { once: true });
 
 /* 2) CONFIGURACIÓN DE FIREBASE */
@@ -149,36 +148,37 @@ const COLOR_PRESETS = [
 ];
 
 /* 4) ELEMENTOS DEL DOM */
-const splashScreen   = document.getElementById("splashScreen");
-const appEl          = document.getElementById("app");
-const btnAddTeam     = document.getElementById("btnAddTeam");
-const teamsCounterEl = document.getElementById("teamsCounter");
-const rankingListEl  = document.getElementById("rankingList");
-const emptyStateEl   = document.getElementById("emptyState");
-const chartEmptyEl   = document.getElementById("chartEmptyState");
+const splashScreen      = document.getElementById("splashScreen");
+const splashTextGroup   = document.getElementById("splashTextGroup");
+const splashDeerGroup   = document.getElementById("splashDeerGroup");
+const appEl             = document.getElementById("app");
+const btnAddTeam        = document.getElementById("btnAddTeam");
+const teamsCounterEl    = document.getElementById("teamsCounter");
+const rankingListEl     = document.getElementById("rankingList");
+const emptyStateEl      = document.getElementById("emptyState");
+const chartEmptyEl      = document.getElementById("chartEmptyState");
 
-const teamModal      = document.getElementById("teamModal");
-const modalTitle     = document.getElementById("modalTitle");
-const teamForm       = document.getElementById("teamForm");
-const teamIdInput    = document.getElementById("teamId");
-const teamNameInput  = document.getElementById("teamName");
-const teamColorInput = document.getElementById("teamColor");
-const colorPresetsEl = document.getElementById("colorPresets");
-const btnCloseModal  = document.getElementById("btnCloseModal");
-const btnDeleteTeam  = document.getElementById("btnDeleteTeam");
+const teamModal         = document.getElementById("teamModal");
+const modalTitle        = document.getElementById("modalTitle");
+const teamForm          = document.getElementById("teamForm");
+const teamIdInput       = document.getElementById("teamId");
+const teamNameInput     = document.getElementById("teamName");
+const teamColorInput    = document.getElementById("teamColor");
+const colorPresetsEl    = document.getElementById("colorPresets");
+const btnCloseModal     = document.getElementById("btnCloseModal");
+const btnDeleteTeam     = document.getElementById("btnDeleteTeam");
 
-const toastEl        = document.getElementById("toast");
-const statusDot      = document.getElementById("statusDot");
-const statusText     = document.getElementById("statusText");
-const chartCanvas    = document.getElementById("topChart");
-const cursorGlow     = document.getElementById("cursorGlow");
+const toastEl           = document.getElementById("toast");
+const statusDot         = document.getElementById("statusDot");
+const statusText        = document.getElementById("statusText");
+const chartCanvas       = document.getElementById("topChart");
+const cursorGlow        = document.getElementById("cursorGlow");
 
-/* 5) INTERACTIVIDAD CON MOUSE Y INTERACTIVIDAD MÓVIL PADRE (PARTÍCULAS Y VIBRACIÓN) */
+/* 5) INTERACTIVIDAD CELULAR / PARTICULAS */
 let mouseX = -500;
 let mouseY = -500;
 const mouseParticles = [];
 
-// Función para disparar partículas luminosas en coordenadas
 function spawnParticles(x, y, amount = 6) {
   for (let i = 0; i < amount; i++) {
     mouseParticles.push({
@@ -194,33 +194,25 @@ function spawnParticles(x, y, amount = 6) {
   }
 }
 
-// Eventos del Mouse
 window.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
   mouseY = e.clientY;
-
   if (cursorGlow) {
     cursorGlow.style.left = `${mouseX}px`;
     cursorGlow.style.top = `${mouseY}px`;
   }
-
-  if (isCanvasRunning && Math.random() < 0.6) {
-    spawnParticles(mouseX, mouseY, 1);
-  }
+  if (isCanvasRunning && Math.random() < 0.6) spawnParticles(mouseX, mouseY, 1);
 });
 
-// Eventos de Toque en Celular (Ráfaga de color + respuesta háptica)
 window.addEventListener("touchstart", (e) => {
   const touch = e.touches[0];
   if (!touch) return;
   mouseX = touch.clientX;
   mouseY = touch.clientY;
-
   if (cursorGlow) {
     cursorGlow.style.left = `${mouseX}px`;
     cursorGlow.style.top = `${mouseY}px`;
   }
-
   spawnParticles(mouseX, mouseY, 8);
 }, { passive: true });
 
@@ -229,12 +221,10 @@ window.addEventListener("touchmove", (e) => {
   if (!touch) return;
   mouseX = touch.clientX;
   mouseY = touch.clientY;
-
   if (cursorGlow) {
     cursorGlow.style.left = `${mouseX}px`;
     cursorGlow.style.top = `${mouseY}px`;
   }
-
   spawnParticles(mouseX, mouseY, 2);
 }, { passive: true });
 
@@ -257,7 +247,7 @@ function initMathBackgroundCanvas() {
     height = canvas.height = window.innerHeight;
   });
 
-  const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)", "∇", "α", "β"];
+  const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)", "∇"];
 
   const bgParticles = Array.from({ length: 22 }, () => ({
     text: mathItems[Math.floor(Math.random() * mathItems.length)],
@@ -282,11 +272,7 @@ function initMathBackgroundCanvas() {
       const dx = mouseX - p.x;
       const dy = mouseY - p.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      let extraScale = 1;
-
-      if (dist < 120) {
-        extraScale = 1 + (120 - dist) / 70;
-      }
+      let extraScale = dist < 120 ? 1 + (120 - dist) / 70 : 1;
 
       ctx.save();
       ctx.font = `600 ${p.size * extraScale}px 'Space Grotesk', sans-serif`;
@@ -325,13 +311,24 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) SECUENCIA DEL SPLASH CON DISPARO DE SONIDO FUTURISTA DE EXPANSIÓN */
+/* 6) SECUENCIA DE PANTALLA DE CARGA CON VENADO FUTURISTA */
 function initSplashScreen() {
-  // Dispara el sonido futurista al expandirse la palabra "Matemáticas" (1200ms)
+  // 1. Paso 1 (1.0s): El texto "Rally de Matemáticas" se mueve a un lado y desaparece
   setTimeout(() => {
-    AudioFX.playMathExpansion();
-  }, 1200);
+    if (splashTextGroup) {
+      splashTextGroup.classList.add("slide-out");
+    }
+  }, 1000);
 
+  // 2. Paso 2 (1.6s): El venado SVG se expande en el centro y se activa el sonido futurista
+  setTimeout(() => {
+    if (splashDeerGroup) {
+      splashDeerGroup.classList.add("expand-deer");
+    }
+    AudioFX.playMathExpansion();
+  }, 1600);
+
+  // 3. Paso 3 (2.9s): Oculta splash screen, despliega la app y el venado aterriza en la cabecera
   setTimeout(() => {
     splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -344,11 +341,11 @@ function initSplashScreen() {
       });
     });
 
-    setTimeout(() => splashScreen.remove(), 500);
-  }, 2700);
+    setTimeout(() => splashScreen.remove(), 600);
+  }, 2900);
 }
 
-/* 7) AUXILIARES Y UTILERÍAS */
+/* 7) AUXILIARES */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -393,7 +390,7 @@ function highlightActiveSwatch() {
   });
 }
 
-/* 8) CONTROL DEL MODAL CON SONIDO POP */
+/* 8) MODAL Y SONIDO POP */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -404,7 +401,6 @@ function openAddModal() {
   highlightActiveSwatch();
   teamModal.classList.remove("hidden");
   
-  // Sonido POP al abrir ventana de agregar
   AudioFX.playPop();
   triggerHaptic();
 
@@ -447,7 +443,7 @@ btnCloseModal.addEventListener("click", closeModal);
 teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
-/* 9) MANEJO DE BASE DE DATOS Y PUNTAJE */
+/* 9) GUARDAR / ELIMINAR / PUNTAJE */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const name = teamNameInput.value.trim();
@@ -500,7 +496,7 @@ function adjustScore(id, delta) {
   teamsRef.child(id).child("score").transaction(current => (current || 0) + numDelta);
 }
 
-/* 10) RENDERIZADO GENERAL Y GRÁFICOS */
+/* 10) RENDERIZADO GENERAL */
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
     .map(([id, data]) => ({ id, ...data, score: Number(data.score) || 0 }))
@@ -649,6 +645,10 @@ db.ref(".info/connected").on("value", (snap) => {
   statusText.textContent = connected ? "Conectado en tiempo real" : "Sin conexión";
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  buildColorPresets();
+  initSplashScreen();
+});
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
   initSplashScreen();
