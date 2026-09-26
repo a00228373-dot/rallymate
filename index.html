@@ -17,8 +17,11 @@
 </head>
 <body>
 
-  <!-- Canvas de fondo con partículas y ecuaciones -->
+  <!-- Canvas de fondo interactivo con partículas y luz de cursor -->
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
+
+  <!-- Aura o resplandor dinámico que sigue al mouse -->
+  <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
 
   <!-- ===================================================== -->
   <!-- SPLASH SCREEN ANIMACIÓN FLUIDA Y CENTRADA            -->
@@ -47,7 +50,7 @@
           </linearGradient>
         </defs>
 
-        <!-- GRUPO SECUNDARIO: Anillos, Sigma y Textos Auxiliares (SE DESVANECEN) -->
+        <!-- GRUPO SECUNDARIO: Anillos, Sigma y Textos Auxiliares -->
         <g class="splash-fade-group">
           <!-- Anillos Azules -->
           <g class="orbit-group">
@@ -68,7 +71,7 @@
           <text x="300" y="245" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
         </g>
 
-        <!-- GRUPO PRINCIPAL: "MATEMÁTICAS" (CRECE Y SE CENTRA DE FORMA FLUIDA) -->
+        <!-- GRUPO PRINCIPAL: "MATEMÁTICAS" -->
         <g class="math-expand-group">
           <text x="295" y="195" class="svg-text math-text" text-anchor="start">Matemáticas</text>
         </g>
@@ -81,7 +84,7 @@
   <!-- ===================================================== -->
   <div id="app" class="app hidden">
 
-    <header class="app-header">
+    <header class="app-header interactive-card">
       <div class="header-brand">
         <div class="brand-icon-wrapper">
           <span class="brand-icon" aria-hidden="true">π</span>
@@ -94,7 +97,7 @@
       </div>
       <div class="header-actions">
         <span class="teams-counter" id="teamsCounter">0 / 20 equipos</span>
-        <button id="btnAddTeam" class="btn btn-primary">
+        <button id="btnAddTeam" class="btn btn-primary interactive-btn">
           <span class="btn-icon" aria-hidden="true">+</span> Agregar Equipo
         </button>
       </div>
@@ -103,7 +106,7 @@
     <main class="dashboard">
 
       <!-- Gráfico Top 5 -->
-      <section class="card chart-card">
+      <section class="card chart-card interactive-card">
         <div class="card-header-flex">
           <h2 class="card-title"><span class="title-icon">🏆</span> Top 5 Liderazgo</h2>
           <span class="card-badge">Estadísticas</span>
@@ -115,7 +118,7 @@
       </section>
 
       <!-- Ranking General -->
-      <section class="card ranking-card">
+      <section class="card ranking-card interactive-card">
         <div class="card-header-flex">
           <h2 class="card-title"><span class="title-icon">📊</span> Tabla General de Posiciones</h2>
           <span class="card-badge">En tiempo real</span>
@@ -138,7 +141,7 @@
   <!-- MODAL AGREGAR / EDITAR EQUIPO                         -->
   <!-- ===================================================== -->
   <div id="teamModal" class="modal-overlay hidden">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal interactive-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-header">
         <h3 id="modalTitle">Agregar Equipo</h3>
         <button type="button" id="btnCloseModal" class="btn-close" aria-label="Cerrar">&times;</button>
@@ -162,7 +165,7 @@
 
         <div class="modal-footer">
           <button type="button" id="btnDeleteTeam" class="btn btn-danger hidden">🗑 Eliminar equipo</button>
-          <button type="submit" class="btn btn-primary">Guardar Equipo</button>
+          <button type="submit" class="btn btn-primary interactive-btn">Guardar Equipo</button>
         </div>
       </form>
     </div>
