@@ -1,9 +1,102 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   JavaScript Optimizado: Sincronización de Animación y Carga Ligera
+   JavaScript: Audio Futurista + Partículas Interactivas
    ===================================================== */
 
-/* 1) CONFIGURACIÓN DE FIREBASE */
+/* 1) SINTETIZADOR DE AUDIO FUTURISTA (Web Audio API) */
+const AudioFX = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
+  },
+
+  // Sonido futurista de inicio cuando entra "Matemáticas"
+  playFuturisticStart() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    // Oscilador 1: Barrido de frecuencia ascendente estilo láser / energía
+    const osc1 = this.ctx.createOscillator();
+    const gain1 = this.ctx.createGain();
+    osc1.type = "sawtooth";
+    osc1.frequency.setValueAtTime(140, now);
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 1.2);
+    
+    gain1.gain.setValueAtTime(0.01, now);
+    gain1.gain.linearRampToValueAtTime(0.2, now + 0.4);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+
+    const filter1 = this.ctx.createBiquadFilter();
+    filter1.type = "lowpass";
+    filter1.frequency.setValueAtTime(300, now);
+    filter1.frequency.exponentialRampToValueAtTime(3500, now + 1.0);
+
+    osc1.connect(filter1);
+    filter1.connect(gain1);
+    gain1.connect(this.ctx.destination);
+
+    osc1.start(now);
+    osc1.stop(now + 1.8);
+
+    // Oscilador 2: Sub-bajo futurista impactante
+    const sub = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(55, now);
+    sub.frequency.exponentialRampToValueAtTime(120, now + 0.4);
+    sub.frequency.exponentialRampToValueAtTime(30, now + 1.5);
+
+    subGain.gain.setValueAtTime(0.25, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+    sub.connect(subGain);
+    subGain.connect(this.ctx.destination);
+
+    sub.start(now);
+    sub.stop(now + 1.5);
+  },
+
+  // Sonido futurista al sumar / restar puntos (arpegio digital)
+  playPointChime(isPositive = true) {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    // Notas futuristas ascendentes para positivo, descendentes para negativo
+    const freqs = isPositive
+      ? [523.25, 659.25, 783.99, 1046.50] // Do, Mi, Sol, Do (C5-E5-G5-C6)
+      : [440.00, 370.00, 311.13, 220.00]; // La, Fa#, Mib, La
+
+    freqs.forEach((freq, index) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + index * 0.05);
+
+      gain.gain.setValueAtTime(0.12, now + index * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.05 + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + index * 0.05);
+      osc.stop(now + index * 0.05 + 0.3);
+    });
+  }
+};
+
+/* Activar AudioContext con cualquier interacción del usuario */
+window.addEventListener("pointerdown", () => AudioFX.init(), { once: true });
+
+/* 2) CONFIGURACIÓN DE FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBgVBaF5tdGRRSFkvIddbLHmwOXgi8gqTk",
   authDomain: "rallymatematicas-b1aa0.firebaseapp.com",
@@ -18,7 +111,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const teamsRef = db.ref("teams");
 
-/* 2) ESTADO GLOBAL */
+/* 3) ESTADO GLOBAL */
 const MAX_TEAMS = 20;
 let teamsData = {};
 let sortedTeams = [];
@@ -31,7 +124,7 @@ const COLOR_PRESETS = [
   "#10b981", "#f59e0b", "#f43f5e", "#ffffff"
 ];
 
-/* 3) ELEMENTOS DEL DOM */
+/* 4) ELEMENTOS DEL DOM */
 const splashScreen   = document.getElementById("splashScreen");
 const appEl          = document.getElementById("app");
 const btnAddTeam     = document.getElementById("btnAddTeam");
@@ -54,8 +147,37 @@ const toastEl        = document.getElementById("toast");
 const statusDot      = document.getElementById("statusDot");
 const statusText     = document.getElementById("statusText");
 const chartCanvas    = document.getElementById("topChart");
+const cursorGlow     = document.getElementById("cursorGlow");
 
-/* 4) CANVAS CON PARTÍCULAS (Inicia DESPUÉS de la animación para no trabar el celular) */
+/* 5) CANVAS E INTERACTIVIDAD DE MOUSE CON RASTRO DE COLOR Y PARTÍCULAS */
+let mouseX = -500;
+let mouseY = -500;
+const mouseParticles = [];
+
+window.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (cursorGlow) {
+    cursorGlow.style.left = `${mouseX}px`;
+    cursorGlow.style.top = `${mouseY}px`;
+  }
+
+  // Generar estela/rastro de color al mover el cursor
+  if (isCanvasRunning && Math.random() < 0.6) {
+    mouseParticles.push({
+      x: mouseX,
+      y: mouseY,
+      size: 3 + Math.random() * 8,
+      color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)],
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: (Math.random() - 0.5) * 1.5,
+      alpha: 1,
+      decay: 0.02 + Math.random() * 0.03
+    });
+  }
+});
+
 function initMathBackgroundCanvas() {
   const canvas = document.getElementById("mathBgCanvas");
   if (!canvas) return;
@@ -71,7 +193,7 @@ function initMathBackgroundCanvas() {
 
   const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)", "∇", "α", "β"];
 
-  const particles = Array.from({ length: 20 }, () => ({
+  const bgParticles = Array.from({ length: 22 }, () => ({
     text: mathItems[Math.floor(Math.random() * mathItems.length)],
     x: Math.random() * width,
     y: Math.random() * height,
@@ -85,17 +207,54 @@ function initMathBackgroundCanvas() {
   function animate() {
     if (!isCanvasRunning) return;
     ctx.clearRect(0, 0, width, height);
-    particles.forEach(p => {
+
+    // Dibuja símbolos matemáticos de fondo
+    bgParticles.forEach(p => {
       p.y += p.speedY;
       p.x += p.speedX;
       if (p.y < -30) { p.y = height + 30; p.x = Math.random() * width; }
+
+      // Reacción al pasar el mouse cerca
+      const dx = mouseX - p.x;
+      const dy = mouseY - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      let extraScale = 1;
+
+      if (dist < 120) {
+        extraScale = 1 + (120 - dist) / 70; // Se agrandan al acercarse
+      }
+
       ctx.save();
-      ctx.font = `600 ${p.size}px 'Space Grotesk', sans-serif`;
+      ctx.font = `600 ${p.size * extraScale}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.opacity;
+      ctx.globalAlpha = dist < 120 ? Math.min(1, p.opacity + 0.5) : p.opacity;
       ctx.fillText(p.text, p.x, p.y);
       ctx.restore();
     });
+
+    // Dibuja partículas luminosas de la estela del mouse
+    for (let i = mouseParticles.length - 1; i >= 0; i--) {
+      const p = mouseParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= p.decay;
+
+      if (p.alpha <= 0) {
+        mouseParticles.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.restore();
+    }
+
     requestAnimationFrame(animate);
   }
   
@@ -103,14 +262,18 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 5) TRANSICIÓN SIN LAG Y SYNCRONIZADA CON EL SPLASH */
+/* 6) SECUENCIA DEL SPLASH + DISPARO DE SONIDO FUTURISTA */
 function initSplashScreen() {
-  // Espera 2.7 segundos (duración exacta de la animación CSS de Matemáticas agrandándose)
+  // Dispara el sonido futurista a los 1200ms justo cuando la palabra "Matemáticas" inicia su expansión
+  setTimeout(() => {
+    AudioFX.playFuturisticStart();
+  }, 1200);
+
+  // Transición exacta sin modificar duraciones
   setTimeout(() => {
     splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
     
-    // Activa la renderización del canvas de fondo
     initMathBackgroundCanvas();
 
     requestAnimationFrame(() => {
@@ -123,7 +286,7 @@ function initSplashScreen() {
   }, 2700);
 }
 
-/* 6) AUXILIARES Y UTILERÍAS */
+/* 7) AUXILIARES Y UTILERÍAS */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -167,7 +330,7 @@ function highlightActiveSwatch() {
   });
 }
 
-/* 7) CONTROL DEL MODAL */
+/* 8) CONTROL DEL MODAL */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -212,7 +375,7 @@ btnCloseModal.addEventListener("click", closeModal);
 teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
-/* 8) MANEJO DE BASE DE DATOS (FIREBASE) */
+/* 9) MANEJO DE BASE DE DATOS Y PUNTAJE CON SONIDO FUTURISTA */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const name = teamNameInput.value.trim();
@@ -231,7 +394,11 @@ teamForm.addEventListener("submit", (e) => {
       score: 0,
       createdAt: firebase.database.ServerValue.TIMESTAMP
     })
-      .then(() => { showToast("Equipo registrado 🎉", "success"); closeModal(); })
+      .then(() => { 
+        AudioFX.playPointChime(true);
+        showToast("Equipo registrado 🎉", "success"); 
+        closeModal(); 
+      })
       .catch(err => showToast("Error: " + err.message, "error"));
   }
 });
@@ -246,12 +413,18 @@ btnDeleteTeam.addEventListener("click", () => {
   }
 });
 
+// Función que suma/resta puntos e invoca el sonido futurista
 function adjustScore(id, delta) {
   if (!delta || isNaN(delta)) return;
-  teamsRef.child(id).child("score").transaction(current => (current || 0) + Number(delta));
+  const numDelta = Number(delta);
+  
+  // Reproduce sonido futurista acorde al cambio (+ o -)
+  AudioFX.playPointChime(numDelta >= 0);
+
+  teamsRef.child(id).child("score").transaction(current => (current || 0) + numDelta);
 }
 
-/* 9) RENDERIZADO GENERAL Y GRÁFICOS */
+/* 10) RENDERIZADO GENERAL Y GRÁFICOS */
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
     .map(([id, data]) => ({ id, ...data, score: Number(data.score) || 0 }))
@@ -387,7 +560,7 @@ function renderApp() {
   renderChart();
 }
 
-/* 10) INICIALIZACIÓN */
+/* 11) INICIALIZACIÓN */
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
   renderApp();
