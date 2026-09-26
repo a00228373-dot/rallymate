@@ -8,20 +8,20 @@
 <title>Rally de Matemáticas — Tec de Monterrey</title>
 <meta name="description" content="Marcador en vivo del Rally de Matemáticas - Tec de Monterrey">
 
-<!-- Tipografías Vanguardistas -->
+<!-- Tipografías -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Canvas de fondo con partículas y símbolos matemáticos -->
+  <!-- Canvas de fondo con partículas y ecuaciones -->
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
 
   <!-- ===================================================== -->
-  <!-- SPLASH SCREEN CON LOGO SVG Y ANILLOS ANIMADOS          -->
+  <!-- SPLASH SCREEN CON ANIMACIÓN "MATEMÁTICAS" GIGANTE      -->
   <!-- ===================================================== -->
   <div id="splashScreen" class="splash-screen">
     <div class="splash-grid"></div>
@@ -30,16 +30,16 @@
     <div class="svg-logo-container">
       <svg class="splash-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- Degradado Cian a Violeta para "Matemáticas" -->
+          <!-- Degradado inicial -->
           <linearGradient id="mathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#00f5ff" />
             <stop offset="100%" stop-color="#8b5cf6" />
           </linearGradient>
 
-          <!-- Degradado para Anillos Azules en Órbita -->
+          <!-- Degradados para los Anillos Azules -->
           <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="#00f5ff" stop-opacity="1" />
-            <stop offset="60%" stop-color="#0057ff" stop-opacity="0.4" />
+            <stop offset="60%" stop-color="#0057ff" stop-opacity="0.5" />
             <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
           </linearGradient>
 
@@ -49,7 +49,7 @@
             <stop offset="100%" stop-color="#0057ff" stop-opacity="0.1" />
           </linearGradient>
 
-          <!-- Filtro de Resplandor Neón para el Símbolo Sigma -->
+          <!-- Filtro Neón -->
           <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="6" result="blur1" />
             <feGaussianBlur stdDeviation="14" result="blur2" />
@@ -61,29 +61,31 @@
           </filter>
         </defs>
 
-        <!-- Anillos Azules Animados en Giro (Centrados en X:300, Y:90) -->
-        <g class="orbit-group">
-          <!-- Anillo Exterior Cian/Azul -->
-          <circle class="orbit-ring ring-outer" cx="300" cy="90" r="72" />
-          <!-- Anillo Medio Azul Neón -->
-          <circle class="orbit-ring ring-mid" cx="300" cy="90" r="58" />
-          <!-- Anillo Interior Violeta/Azul -->
-          <circle class="orbit-ring ring-inner" cx="300" cy="90" r="44" />
+        <!-- GRUPO SECUNDARIO: Anillos, Sigma y Textos Auxiliares (SE DESVANECEN) -->
+        <g class="splash-fade-group">
+          <!-- Anillos Azules en Giro -->
+          <g class="orbit-group">
+            <circle class="orbit-ring ring-outer" cx="300" cy="90" r="72" />
+            <circle class="orbit-ring ring-mid" cx="300" cy="90" r="58" />
+            <circle class="orbit-ring ring-inner" cx="300" cy="90" r="44" />
+          </g>
+
+          <!-- Símbolo Σ Neón -->
+          <path class="sigma-symbol" filter="url(#neonGlow)"
+                d="M275 56 H325 V68 L294 90 L325 112 V124 H275 V112 H308 L281 90 L308 68 H275 Z"
+                fill="#00f5ff" />
+
+          <!-- Texto "Rally de" -->
+          <text x="282" y="215" class="svg-text rally-text" text-anchor="end">Rally de</text>
+
+          <!-- Subtítulo "TEC DE MONTERREY" -->
+          <text x="300" y="265" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
         </g>
 
-        <!-- Símbolo Sigma (Σ) Neón Cian -->
-        <path class="sigma-symbol" filter="url(#neonGlow)"
-              d="M275 56 H325 V68 L294 90 L325 112 V124 H275 V112 H308 L281 90 L308 68 H275 Z"
-              fill="#00f5ff" />
-
-        <!-- Texto "Rally de" (Blanco) -->
-        <text x="282" y="215" class="svg-text rally-text" text-anchor="end">Rally de</text>
-
-        <!-- Texto "Matemáticas" (Degradado Cian-Violeta) -->
-        <text x="296" y="215" class="svg-text math-text" text-anchor="start" fill="url(#mathGradient)">Matemáticas</text>
-
-        <!-- Subtítulo "TEC DE MONTERREY" -->
-        <text x="300" y="265" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
+        <!-- GRUPO PRINCIPAL: "MATEMÁTICAS" (CRECE, SE HACE AZUL Y SE EXPANDE EN TODA LA PANTALLA) -->
+        <g class="math-expand-group">
+          <text x="296" y="215" class="svg-text math-text" text-anchor="start">Matemáticas</text>
+        </g>
       </svg>
     </div>
   </div>
@@ -114,7 +116,7 @@
 
     <main class="dashboard">
 
-      <!-- Tarjeta del Gráfico Top 5 -->
+      <!-- Gráfico Top 5 -->
       <section class="card chart-card">
         <div class="card-header-flex">
           <h2 class="card-title"><span class="title-icon">🏆</span> Top 5 Liderazgo</h2>
@@ -126,7 +128,7 @@
         <p id="chartEmptyState" class="empty-state">Aún no hay puntajes registrados.</p>
       </section>
 
-      <!-- Tabla / Ranking General -->
+      <!-- Ranking General -->
       <section class="card ranking-card">
         <div class="card-header-flex">
           <h2 class="card-title"><span class="title-icon">📊</span> Tabla General de Posiciones</h2>
@@ -180,7 +182,7 @@
     </div>
   </div>
 
-  <!-- Toast Notificación -->
+  <!-- Toast -->
   <div id="toast" class="toast hidden" aria-live="assertive"></div>
 
   <!-- FIREBASE & CHART.JS -->
