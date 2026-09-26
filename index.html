@@ -8,7 +8,7 @@
 <title>Rally de Matemáticas — Tec de Monterrey</title>
 <meta name="description" content="Marcador en vivo del Rally de Matemáticas - Tec de Monterrey">
 
-<!-- Tipografías Vanguardistas (Space Grotesk + Plus Jakarta Sans) -->
+<!-- Tipografías Vanguardistas -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -17,29 +17,80 @@
 </head>
 <body>
 
-  <!-- Lienzo de fondo: Ecuaciones y símbolos flotantes dinámicos -->
+  <!-- Canvas de fondo con partículas y símbolos matemáticos -->
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
 
-  <!-- ============================= -->
-  <!-- SPLASH SCREEN MATEMÁTICO      -->
-  <!-- ============================= -->
+  <!-- ===================================================== -->
+  <!-- SPLASH SCREEN CON LOGO SVG Y ANILLOS ANIMADOS          -->
+  <!-- ===================================================== -->
   <div id="splashScreen" class="splash-screen">
-    <div class="math-symbols" id="mathSymbols"></div>
     <div class="splash-grid"></div>
-    <div class="splash-content">
-      <div class="splash-badge">Rally 2026</div>
-      <div class="splash-icon">∑</div>
-      <h1 class="splash-title">Rally de <span>Matemáticas</span></h1>
-      <p class="splash-subtitle">TEC DE MONTERREY</p>
-      <div class="splash-loader">
-        <span></span><span></span><span></span>
-      </div>
+    <div class="splash-glow"></div>
+
+    <div class="svg-logo-container">
+      <svg class="splash-svg" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Degradado Cian a Violeta para "Matemáticas" -->
+          <linearGradient id="mathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00f5ff" />
+            <stop offset="100%" stop-color="#8b5cf6" />
+          </linearGradient>
+
+          <!-- Degradado para Anillos Azules en Órbita -->
+          <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00f5ff" stop-opacity="1" />
+            <stop offset="60%" stop-color="#0057ff" stop-opacity="0.4" />
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+          </linearGradient>
+
+          <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#0057ff" stop-opacity="0.9" />
+            <stop offset="50%" stop-color="#00f5ff" stop-opacity="0.6" />
+            <stop offset="100%" stop-color="#0057ff" stop-opacity="0.1" />
+          </linearGradient>
+
+          <!-- Filtro de Resplandor Neón para el Símbolo Sigma -->
+          <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="6" result="blur1" />
+            <feGaussianBlur stdDeviation="14" result="blur2" />
+            <feMerge>
+              <feMergeNode in="blur2" />
+              <feMergeNode in="blur1" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <!-- Anillos Azules Animados en Giro (Centrados en X:300, Y:90) -->
+        <g class="orbit-group">
+          <!-- Anillo Exterior Cian/Azul -->
+          <circle class="orbit-ring ring-outer" cx="300" cy="90" r="72" />
+          <!-- Anillo Medio Azul Neón -->
+          <circle class="orbit-ring ring-mid" cx="300" cy="90" r="58" />
+          <!-- Anillo Interior Violeta/Azul -->
+          <circle class="orbit-ring ring-inner" cx="300" cy="90" r="44" />
+        </g>
+
+        <!-- Símbolo Sigma (Σ) Neón Cian -->
+        <path class="sigma-symbol" filter="url(#neonGlow)"
+              d="M275 56 H325 V68 L294 90 L325 112 V124 H275 V112 H308 L281 90 L308 68 H275 Z"
+              fill="#00f5ff" />
+
+        <!-- Texto "Rally de" (Blanco) -->
+        <text x="282" y="215" class="svg-text rally-text" text-anchor="end">Rally de</text>
+
+        <!-- Texto "Matemáticas" (Degradado Cian-Violeta) -->
+        <text x="296" y="215" class="svg-text math-text" text-anchor="start" fill="url(#mathGradient)">Matemáticas</text>
+
+        <!-- Subtítulo "TEC DE MONTERREY" -->
+        <text x="300" y="265" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
+      </svg>
     </div>
   </div>
 
-  <!-- ============================= -->
-  <!-- APP PRINCIPAL                 -->
-  <!-- ============================= -->
+  <!-- ===================================================== -->
+  <!-- APP PRINCIPAL                                         -->
+  <!-- ===================================================== -->
   <div id="app" class="app hidden">
 
     <header class="app-header">
@@ -95,9 +146,9 @@
     </footer>
   </div>
 
-  <!-- ============================= -->
-  <!-- MODAL AGREGAR / EDITAR EQUIPO -->
-  <!-- ============================= -->
+  <!-- ===================================================== -->
+  <!-- MODAL AGREGAR / EDITAR EQUIPO                         -->
+  <!-- ===================================================== -->
   <div id="teamModal" class="modal-overlay hidden">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-header">
@@ -129,12 +180,10 @@
     </div>
   </div>
 
-  <!-- Toast de notificaciones -->
+  <!-- Toast Notificación -->
   <div id="toast" class="toast hidden" aria-live="assertive"></div>
 
-  <!-- ============================= -->
-  <!-- FIREBASE & CHART.JS           -->
-  <!-- ============================= -->
+  <!-- FIREBASE & CHART.JS -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
