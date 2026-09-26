@@ -1,6 +1,6 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   Lógica: Firebase Realtime DB + Chart.js + Canvas Math Animation
+   Lógica: Firebase + Chart.js + Animación SVG Splash
    ===================================================== */
 
 /* -----------------------------------------------------
@@ -36,7 +36,7 @@ const COLOR_PRESETS = [
 ];
 
 /* -----------------------------------------------------
-   3) REFERENCIAS AL DOM
+   3) REFERENCIAS DOM
 ------------------------------------------------------ */
 const splashScreen   = document.getElementById("splashScreen");
 const appEl          = document.getElementById("app");
@@ -64,7 +64,7 @@ const statusText     = document.getElementById("statusText");
 const chartCanvas    = document.getElementById("topChart");
 
 /* =====================================================
-   4) FONDO ANIMADO DE MATEMÁTICAS (CANVAS)
+   4) FONDO DE SÍMBOLOS MATEMÁTICOS (CANVAS)
    ===================================================== */
 function initMathBackgroundCanvas() {
   const canvas = document.getElementById("mathBgCanvas");
@@ -125,14 +125,12 @@ function initMathBackgroundCanvas() {
 }
 
 /* =====================================================
-   5) INICIALIZACIÓN Y TRANSICIÓN TIPO SUPASTE
+   5) CONTROL DEL SPLASH Y REVELADO DE LA APP
    ===================================================== */
 function initSplashScreen() {
+  // Permite que la animación de giro de los anillos luzca antes de cargar la app
   setTimeout(() => {
-    // 1. Inicia el desvanecimiento de salida con blur del splash
     splashScreen.classList.add("fade-out");
-
-    // 2. Revela la aplicación con animación de desvanecimiento
     appEl.classList.remove("hidden");
     
     requestAnimationFrame(() => {
@@ -141,13 +139,12 @@ function initSplashScreen() {
       });
     });
 
-    // 3. Destruye el elemento splash al concluir la transición
     setTimeout(() => splashScreen.remove(), 800);
-  }, 2400);
+  }, 2800);
 }
 
 /* =====================================================
-   6) UTILIDADES
+   6) UTILIDADES DE UI Y COLORES
    ===================================================== */
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -198,7 +195,7 @@ function highlightActiveSwatch() {
 }
 
 /* =====================================================
-   7) MODAL: ABRIR / CERRAR
+   7) LÓGICA MODAL
    ===================================================== */
 function openAddModal() {
   editingTeamId = null;
@@ -249,11 +246,10 @@ teamModal.addEventListener("click", (e) => {
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
 /* =====================================================
-   8) GUARDAR / ELIMINAR EQUIPO (Firebase)
+   8) GUARDAR Y ELIMINAR EQUIPOS
    ===================================================== */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
-
   const name = teamNameInput.value.trim();
   const color = teamColorInput.value;
 
@@ -292,7 +288,7 @@ teamForm.addEventListener("submit", (e) => {
 btnDeleteTeam.addEventListener("click", () => {
   if (!editingTeamId) return;
   const team = teamsData[editingTeamId];
-  const ok = confirm(`¿Eliminar al equipo "${team ? team.name : ""}"? Esta acción no se puede deshacer.`);
+  const ok = confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`);
   if (!ok) return;
 
   teamsRef.child(editingTeamId).remove()
@@ -303,9 +299,6 @@ btnDeleteTeam.addEventListener("click", () => {
     .catch(err => showToast("Error al eliminar: " + err.message, "error"));
 });
 
-/* =====================================================
-   9) AJUSTAR PUNTAJE (Transacción en Firebase)
-   ===================================================== */
 function adjustScore(id, delta) {
   if (!delta || isNaN(delta)) return;
   teamsRef.child(id).child("score").transaction(current => {
@@ -314,7 +307,7 @@ function adjustScore(id, delta) {
 }
 
 /* =====================================================
-   10) RENDERIZADO — RANKING Y GRÁFICA
+   9) RENDERIZADO TABLA Y GRÁFICO
    ===================================================== */
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
@@ -339,8 +332,6 @@ function renderRanking() {
 
   sortedTeams.forEach((team, index) => {
     const rank = index + 1;
-
-    // Detectar cambio de puntaje para animar pulso
     const prevScore = previousScores[team.id];
     let pulseClass = "";
     if (prevScore !== undefined && prevScore !== team.score) {
@@ -381,7 +372,6 @@ function renderRanking() {
   previousScores = Object.fromEntries(sortedTeams.map(t => [t.id, t.score]));
 }
 
-// Delegación de eventos en las filas
 rankingListEl.addEventListener("click", (e) => {
   const row = e.target.closest(".team-row");
   if (!row) return;
@@ -395,8 +385,7 @@ rankingListEl.addEventListener("click", (e) => {
     openEditModal(id);
   } else if (action === "delete") {
     const team = teamsData[id];
-    const ok = confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`);
-    if (ok) {
+    if (confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`)) {
       teamsRef.child(id).remove()
         .then(() => showToast("Equipo eliminado", "success"))
         .catch(err => showToast("Error: " + err.message, "error"));
@@ -415,9 +404,6 @@ rankingListEl.addEventListener("click", (e) => {
   }
 });
 
-/* -----------------------------------------------------
-   Gráfica Top 5 con Chart.js Rediseñada
------------------------------------------------------- */
 function renderChart() {
   const top5 = sortedTeams.slice(0, 5);
 
@@ -433,7 +419,7 @@ function renderChart() {
   const labels = top5.map(t => t.name);
   const data = top5.map(t => t.score);
   const ctx = chartCanvas.getContext("2d");
-  
+
   const backgrounds = top5.map(t => {
     const gradient = ctx.createLinearGradient(0, 0, chartCanvas.width || 300, 0);
     gradient.addColorStop(0, hexToRgba(t.color, 0.4));
@@ -497,9 +483,6 @@ function renderChart() {
   });
 }
 
-/* =====================================================
-   11) RENDER GENERAL
-   ===================================================== */
 function renderApp() {
   recomputeSortedTeams();
   renderCounter();
@@ -508,7 +491,7 @@ function renderApp() {
 }
 
 /* =====================================================
-   12) LISTENER EN TIEMPO REAL (Firebase)
+   10) LISTENERS TIEMPO REAL
    ===================================================== */
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
@@ -519,16 +502,10 @@ db.ref(".info/connected").on("value", (snap) => {
   const connected = snap.val() === true;
   statusDot.classList.toggle("online", connected);
   statusDot.classList.toggle("offline", !connected);
-  statusText.textContent = connected
-    ? "Conectado en tiempo real"
-    : "Sin conexión — reintentando...";
+  statusText.textContent = connected ? "Conectado en tiempo real" : "Sin conexión — reintentando...";
 });
 
-/* =====================================================
-   13) INICIALIZACIÓN
-   ===================================================== */
-document.addEventListener("touchstart", function(){}, { passive: true });
-
+/* INICIALIZACIÓN */
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
   initMathBackgroundCanvas();
