@@ -20,11 +20,11 @@
   <!-- Canvas de fondo interactivo con partículas y luz de cursor -->
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
 
-  <!-- Aura o resplandor dinámico que sigue al mouse -->
+  <!-- Resplandor dinámico que sigue al cursor o toque -->
   <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
 
   <!-- ===================================================== -->
-  <!-- SPLASH SCREEN ANIMACIÓN FLUIDA Y CENTRADA            -->
+  <!-- SPLASH SCREEN ANIMACIÓN INTALADA Y CENTRADA           -->
   <!-- ===================================================== -->
   <div id="splashScreen" class="splash-screen">
     <div class="splash-grid"></div>
@@ -33,7 +33,6 @@
     <div class="svg-logo-container">
       <svg class="splash-svg" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- Degradados optimizados -->
           <linearGradient id="mathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#00f5ff" />
             <stop offset="100%" stop-color="#8b5cf6" />
@@ -52,22 +51,17 @@
 
         <!-- GRUPO SECUNDARIO: Anillos, Sigma y Textos Auxiliares -->
         <g class="splash-fade-group">
-          <!-- Anillos Azules -->
           <g class="orbit-group">
             <circle class="orbit-ring ring-outer" cx="300" cy="85" r="65" />
             <circle class="orbit-ring ring-mid" cx="300" cy="85" r="50" />
             <circle class="orbit-ring ring-inner" cx="300" cy="85" r="38" />
           </g>
 
-          <!-- Símbolo Σ -->
           <path class="sigma-symbol"
                 d="M278 55 H322 V66 L295 85 L322 104 V115 H278 V104 H307 L283 85 L307 66 H278 Z"
                 fill="#00f5ff" />
 
-          <!-- Texto "Rally de" -->
           <text x="285" y="195" class="svg-text rally-text" text-anchor="end">Rally de</text>
-
-          <!-- Subtítulo "TEC DE MONTERREY" -->
           <text x="300" y="245" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
         </g>
 
@@ -97,7 +91,7 @@
       </div>
       <div class="header-actions">
         <span class="teams-counter" id="teamsCounter">0 / 20 equipos</span>
-        <button id="btnAddTeam" class="btn btn-primary interactive-btn">
+        <button id="btnAddTeam" class="btn btn-primary interactive-btn glow-cyan">
           <span class="btn-icon" aria-hidden="true">+</span> Agregar Equipo
         </button>
       </div>
@@ -164,8 +158,8 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button" id="btnDeleteTeam" class="btn btn-danger hidden">🗑 Eliminar equipo</button>
-          <button type="submit" class="btn btn-primary interactive-btn">Guardar Equipo</button>
+          <button type="button" id="btnDeleteTeam" class="btn btn-danger glow-danger hidden">🗑 Eliminar equipo</button>
+          <button type="submit" class="btn btn-primary interactive-btn glow-cyan">Guardar Equipo</button>
         </div>
       </form>
     </div>
