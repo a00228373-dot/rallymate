@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#03050c">
+<meta name="color-scheme" content="dark">
+<title>Rally de Matemáticas — Tec de Monterrey</title>
+<meta name="description" content="Marcador en vivo del Rally de Matemáticas - Tec de Monterrey">
+
+<!-- Tipografías Vanguardistas (Space Grotesk + Plus Jakarta Sans) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Lienzo de fondo: Ecuaciones y símbolos flotantes dinámicos -->
+  <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
+
+  <!-- ============================= -->
+  <!-- SPLASH SCREEN MATEMÁTICO      -->
+  <!-- ============================= -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="math-symbols" id="mathSymbols"></div>
+    <div class="splash-grid"></div>
+    <div class="splash-content">
+      <div class="splash-badge">Rally 2026</div>
+      <div class="splash-icon">∑</div>
+      <h1 class="splash-title">Rally de <span>Matemáticas</span></h1>
+      <p class="splash-subtitle">TEC DE MONTERREY</p>
+      <div class="splash-loader">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= -->
+  <!-- APP PRINCIPAL                 -->
+  <!-- ============================= -->
+  <div id="app" class="app hidden">
+
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon-wrapper">
+          <span class="brand-icon" aria-hidden="true">π</span>
+        </div>
+        <div class="header-titles">
+          <div class="live-pill"><span class="pulse-ring"></span> EN VIVO</div>
+          <h1>Rally de Matemáticas</h1>
+          <p>Tec de Monterrey · Tablero de Posiciones</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="teams-counter" id="teamsCounter">0 / 20 equipos</span>
+        <button id="btnAddTeam" class="btn btn-primary">
+          <span class="btn-icon" aria-hidden="true">+</span> Agregar Equipo
+        </button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+
+      <!-- Tarjeta del Gráfico Top 5 -->
+      <section class="card chart-card">
+        <div class="card-header-flex">
+          <h2 class="card-title"><span class="title-icon">🏆</span> Top 5 Liderazgo</h2>
+          <span class="card-badge">Estadísticas</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="topChart"></canvas>
+        </div>
+        <p id="chartEmptyState" class="empty-state">Aún no hay puntajes registrados.</p>
+      </section>
+
+      <!-- Tabla / Ranking General -->
+      <section class="card ranking-card">
+        <div class="card-header-flex">
+          <h2 class="card-title"><span class="title-icon">📊</span> Tabla General de Posiciones</h2>
+          <span class="card-badge">En tiempo real</span>
+        </div>
+        <div id="rankingList" class="ranking-list" aria-live="polite"></div>
+        <p id="emptyState" class="empty-state">Aún no hay equipos registrados. ¡Agrega el primero!</p>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <div class="status-badge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Conectando en tiempo real...</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================= -->
+  <!-- MODAL AGREGAR / EDITAR EQUIPO -->
+  <!-- ============================= -->
+  <div id="teamModal" class="modal-overlay hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 id="modalTitle">Agregar Equipo</h3>
+        <button type="button" id="btnCloseModal" class="btn-close" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <form id="teamForm" class="modal-body">
+        <input type="hidden" id="teamId" value="">
+
+        <div class="form-group">
+          <label for="teamName">Nombre / Número del equipo</label>
+          <input type="text" id="teamName" placeholder="Ej. Equipo 07 - Los Infinitos" maxlength="32" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>Color distintivo</label>
+          <div class="color-picker-row">
+            <input type="color" id="teamColor" value="#00f5ff" title="Elegir color">
+            <div class="color-presets" id="colorPresets"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnDeleteTeam" class="btn btn-danger hidden">🗑 Eliminar equipo</button>
+          <button type="submit" class="btn btn-primary">Guardar Equipo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast de notificaciones -->
+  <div id="toast" class="toast hidden" aria-live="assertive"></div>
+
+  <!-- ============================= -->
+  <!-- FIREBASE & CHART.JS           -->
+  <!-- ============================= -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
