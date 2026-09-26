@@ -1,9 +1,9 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   JavaScript: Audio Futurista + Partículas Interactivas
+   JavaScript: Sonidos Futuristas + Pop + Partículas Celular
    ===================================================== */
 
-/* 1) SINTETIZADOR DE AUDIO FUTURISTA (Web Audio API) */
+/* 1) SINTETIZADOR DE AUDIO FUTURISTA Y EFECTOS DE SONIDO (Web Audio API) */
 const AudioFX = {
   ctx: null,
   init() {
@@ -16,63 +16,87 @@ const AudioFX = {
     }
   },
 
-  // Sonido futurista de inicio cuando entra "Matemáticas"
-  playFuturisticStart() {
+  // Sonido potente al expandirse la palabra "Matemáticas"
+  playMathExpansion() {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
 
-    // Oscilador 1: Barrido de frecuencia ascendente estilo láser / energía
-    const osc1 = this.ctx.createOscillator();
-    const gain1 = this.ctx.createGain();
-    osc1.type = "sawtooth";
-    osc1.frequency.setValueAtTime(140, now);
-    osc1.frequency.exponentialRampToValueAtTime(880, now + 1.2);
-    
-    gain1.gain.setValueAtTime(0.01, now);
-    gain1.gain.linearRampToValueAtTime(0.2, now + 0.4);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+    // Barrido de frecuencia resonante de alta energía
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
 
-    const filter1 = this.ctx.createBiquadFilter();
-    filter1.type = "lowpass";
-    filter1.frequency.setValueAtTime(300, now);
-    filter1.frequency.exponentialRampToValueAtTime(3500, now + 1.0);
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 1.1);
 
-    osc1.connect(filter1);
-    filter1.connect(gain1);
-    gain1.connect(this.ctx.destination);
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(200, now);
+    filter.frequency.exponentialRampToValueAtTime(4500, now + 0.9);
+    filter.Q.setValueAtTime(6, now);
 
-    osc1.start(now);
-    osc1.stop(now + 1.8);
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.28, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
-    // Oscilador 2: Sub-bajo futurista impactante
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 1.5);
+
+    // Sub-impacto espacial
     const sub = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
     sub.type = "sine";
-    sub.frequency.setValueAtTime(55, now);
-    sub.frequency.exponentialRampToValueAtTime(120, now + 0.4);
-    sub.frequency.exponentialRampToValueAtTime(30, now + 1.5);
+    sub.frequency.setValueAtTime(60, now);
+    sub.frequency.exponentialRampToValueAtTime(180, now + 0.3);
+    sub.frequency.exponentialRampToValueAtTime(35, now + 1.2);
 
-    subGain.gain.setValueAtTime(0.25, now);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    subGain.gain.setValueAtTime(0.3, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
 
     sub.connect(subGain);
     subGain.connect(this.ctx.destination);
 
     sub.start(now);
-    sub.stop(now + 1.5);
+    sub.stop(now + 1.3);
   },
 
-  // Sonido futurista al sumar / restar puntos (arpegio digital)
+  // Sonido de "POP" para la ventana/acción de Agregar Equipo
+  playPop() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(700, now);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.09);
+  },
+
+  // Sonido futurista al sumar / restar puntos
   playPointChime(isPositive = true) {
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
 
-    // Notas futuristas ascendentes para positivo, descendentes para negativo
     const freqs = isPositive
-      ? [523.25, 659.25, 783.99, 1046.50] // Do, Mi, Sol, Do (C5-E5-G5-C6)
-      : [440.00, 370.00, 311.13, 220.00]; // La, Fa#, Mib, La
+      ? [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6
+      : [440.00, 370.00, 311.13, 220.00];
 
     freqs.forEach((freq, index) => {
       const osc = this.ctx.createOscillator();
@@ -81,7 +105,7 @@ const AudioFX = {
       osc.type = "sine";
       osc.frequency.setValueAtTime(freq, now + index * 0.05);
 
-      gain.gain.setValueAtTime(0.12, now + index * 0.05);
+      gain.gain.setValueAtTime(0.14, now + index * 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.05 + 0.25);
 
       osc.connect(gain);
@@ -93,7 +117,7 @@ const AudioFX = {
   }
 };
 
-/* Activar AudioContext con cualquier interacción del usuario */
+/* Activar AudioContext al primer toque/click */
 window.addEventListener("pointerdown", () => AudioFX.init(), { once: true });
 
 /* 2) CONFIGURACIÓN DE FIREBASE */
@@ -149,11 +173,28 @@ const statusText     = document.getElementById("statusText");
 const chartCanvas    = document.getElementById("topChart");
 const cursorGlow     = document.getElementById("cursorGlow");
 
-/* 5) CANVAS E INTERACTIVIDAD DE MOUSE CON RASTRO DE COLOR Y PARTÍCULAS */
+/* 5) INTERACTIVIDAD CON MOUSE Y INTERACTIVIDAD MÓVIL PADRE (PARTÍCULAS Y VIBRACIÓN) */
 let mouseX = -500;
 let mouseY = -500;
 const mouseParticles = [];
 
+// Función para disparar partículas luminosas en coordenadas
+function spawnParticles(x, y, amount = 6) {
+  for (let i = 0; i < amount; i++) {
+    mouseParticles.push({
+      x,
+      y,
+      size: 4 + Math.random() * 10,
+      color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      alpha: 1,
+      decay: 0.02 + Math.random() * 0.03
+    });
+  }
+}
+
+// Eventos del Mouse
 window.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
   mouseY = e.clientY;
@@ -163,20 +204,45 @@ window.addEventListener("mousemove", (e) => {
     cursorGlow.style.top = `${mouseY}px`;
   }
 
-  // Generar estela/rastro de color al mover el cursor
   if (isCanvasRunning && Math.random() < 0.6) {
-    mouseParticles.push({
-      x: mouseX,
-      y: mouseY,
-      size: 3 + Math.random() * 8,
-      color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)],
-      vx: (Math.random() - 0.5) * 1.5,
-      vy: (Math.random() - 0.5) * 1.5,
-      alpha: 1,
-      decay: 0.02 + Math.random() * 0.03
-    });
+    spawnParticles(mouseX, mouseY, 1);
   }
 });
+
+// Eventos de Toque en Celular (Ráfaga de color + respuesta háptica)
+window.addEventListener("touchstart", (e) => {
+  const touch = e.touches[0];
+  if (!touch) return;
+  mouseX = touch.clientX;
+  mouseY = touch.clientY;
+
+  if (cursorGlow) {
+    cursorGlow.style.left = `${mouseX}px`;
+    cursorGlow.style.top = `${mouseY}px`;
+  }
+
+  spawnParticles(mouseX, mouseY, 8);
+}, { passive: true });
+
+window.addEventListener("touchmove", (e) => {
+  const touch = e.touches[0];
+  if (!touch) return;
+  mouseX = touch.clientX;
+  mouseY = touch.clientY;
+
+  if (cursorGlow) {
+    cursorGlow.style.left = `${mouseX}px`;
+    cursorGlow.style.top = `${mouseY}px`;
+  }
+
+  spawnParticles(mouseX, mouseY, 2);
+}, { passive: true });
+
+function triggerHaptic() {
+  if ("vibrate" in navigator) {
+    try { navigator.vibrate(12); } catch (_) {}
+  }
+}
 
 function initMathBackgroundCanvas() {
   const canvas = document.getElementById("mathBgCanvas");
@@ -208,20 +274,18 @@ function initMathBackgroundCanvas() {
     if (!isCanvasRunning) return;
     ctx.clearRect(0, 0, width, height);
 
-    // Dibuja símbolos matemáticos de fondo
     bgParticles.forEach(p => {
       p.y += p.speedY;
       p.x += p.speedX;
       if (p.y < -30) { p.y = height + 30; p.x = Math.random() * width; }
 
-      // Reacción al pasar el mouse cerca
       const dx = mouseX - p.x;
       const dy = mouseY - p.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       let extraScale = 1;
 
       if (dist < 120) {
-        extraScale = 1 + (120 - dist) / 70; // Se agrandan al acercarse
+        extraScale = 1 + (120 - dist) / 70;
       }
 
       ctx.save();
@@ -232,7 +296,6 @@ function initMathBackgroundCanvas() {
       ctx.restore();
     });
 
-    // Dibuja partículas luminosas de la estela del mouse
     for (let i = mouseParticles.length - 1; i >= 0; i--) {
       const p = mouseParticles[i];
       p.x += p.vx;
@@ -250,7 +313,7 @@ function initMathBackgroundCanvas() {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.alpha;
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 12;
       ctx.fill();
       ctx.restore();
     }
@@ -262,14 +325,13 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) SECUENCIA DEL SPLASH + DISPARO DE SONIDO FUTURISTA */
+/* 6) SECUENCIA DEL SPLASH CON DISPARO DE SONIDO FUTURISTA DE EXPANSIÓN */
 function initSplashScreen() {
-  // Dispara el sonido futurista a los 1200ms justo cuando la palabra "Matemáticas" inicia su expansión
+  // Dispara el sonido futurista al expandirse la palabra "Matemáticas" (1200ms)
   setTimeout(() => {
-    AudioFX.playFuturisticStart();
+    AudioFX.playMathExpansion();
   }, 1200);
 
-  // Transición exacta sin modificar duraciones
   setTimeout(() => {
     splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -317,6 +379,7 @@ function buildColorPresets() {
     swatch.addEventListener("click", () => {
       teamColorInput.value = color;
       highlightActiveSwatch();
+      triggerHaptic();
     });
     swatch.dataset.color = color;
     colorPresetsEl.appendChild(swatch);
@@ -330,7 +393,7 @@ function highlightActiveSwatch() {
   });
 }
 
-/* 8) CONTROL DEL MODAL */
+/* 8) CONTROL DEL MODAL CON SONIDO POP */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -340,6 +403,11 @@ function openAddModal() {
   btnDeleteTeam.classList.add("hidden");
   highlightActiveSwatch();
   teamModal.classList.remove("hidden");
+  
+  // Sonido POP al abrir ventana de agregar
+  AudioFX.playPop();
+  triggerHaptic();
+
   setTimeout(() => teamNameInput.focus(), 50);
 }
 
@@ -354,6 +422,10 @@ function openEditModal(id) {
   btnDeleteTeam.classList.remove("hidden");
   highlightActiveSwatch();
   teamModal.classList.remove("hidden");
+
+  AudioFX.playPop();
+  triggerHaptic();
+
   setTimeout(() => teamNameInput.focus(), 50);
 }
 
@@ -375,7 +447,7 @@ btnCloseModal.addEventListener("click", closeModal);
 teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
-/* 9) MANEJO DE BASE DE DATOS Y PUNTAJE CON SONIDO FUTURISTA */
+/* 9) MANEJO DE BASE DE DATOS Y PUNTAJE */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const name = teamNameInput.value.trim();
@@ -385,7 +457,11 @@ teamForm.addEventListener("submit", (e) => {
 
   if (editingTeamId) {
     teamsRef.child(editingTeamId).update({ name, color })
-      .then(() => { showToast("Equipo actualizado ✅", "success"); closeModal(); })
+      .then(() => { 
+        AudioFX.playPop();
+        showToast("Equipo actualizado ✅", "success"); 
+        closeModal(); 
+      })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
     teamsRef.push({
@@ -395,7 +471,8 @@ teamForm.addEventListener("submit", (e) => {
       createdAt: firebase.database.ServerValue.TIMESTAMP
     })
       .then(() => { 
-        AudioFX.playPointChime(true);
+        AudioFX.playPop();
+        triggerHaptic();
         showToast("Equipo registrado 🎉", "success"); 
         closeModal(); 
       })
@@ -413,13 +490,12 @@ btnDeleteTeam.addEventListener("click", () => {
   }
 });
 
-// Función que suma/resta puntos e invoca el sonido futurista
 function adjustScore(id, delta) {
   if (!delta || isNaN(delta)) return;
   const numDelta = Number(delta);
   
-  // Reproduce sonido futurista acorde al cambio (+ o -)
   AudioFX.playPointChime(numDelta >= 0);
+  triggerHaptic();
 
   teamsRef.child(id).child("score").transaction(current => (current || 0) + numDelta);
 }
@@ -449,13 +525,14 @@ function renderRanking() {
     row.className = "team-row";
     if (rank <= 3) row.classList.add(`rank-${rank}`);
     row.dataset.id = team.id;
+    row.style.setProperty("--team-hover-color", hexToRgba(team.color, 0.6));
 
     row.innerHTML = `
       <span class="team-position">${rank}°</span>
       <span class="team-color-dot" style="background:${team.color}; color:${team.color};"></span>
       <div class="team-info">
         <div class="team-name">${escapeHtml(team.name)}</div>
-        <div class="team-score">${team.score} pts</div>
+        <div class="team-score" style="color:${team.color};">${team.score} pts</div>
       </div>
       <div class="row-icons">
         <button class="icon-btn" title="Editar" data-action="edit">✎</button>
