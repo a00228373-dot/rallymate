@@ -1,9 +1,9 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   Lógica JavaScript: Firebase + Chart.js + Splash Sync
+   JavaScript Optimizado: Sincronización de Animación y Carga Ligera
    ===================================================== */
 
-/* 1) FIREBASE CONFIG */
+/* 1) CONFIGURACIÓN DE FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBgVBaF5tdGRRSFkvIddbLHmwOXgi8gqTk",
   authDomain: "rallymatematicas-b1aa0.firebaseapp.com",
@@ -22,16 +22,16 @@ const teamsRef = db.ref("teams");
 const MAX_TEAMS = 20;
 let teamsData = {};
 let sortedTeams = [];
-let previousScores = {};
 let editingTeamId = null;
 let topChart = null;
+let isCanvasRunning = false;
 
 const COLOR_PRESETS = [
   "#00f5ff", "#8b5cf6", "#0057ff", "#ec4899",
   "#10b981", "#f59e0b", "#f43f5e", "#ffffff"
 ];
 
-/* 3) REFERENCIAS DOM */
+/* 3) ELEMENTOS DEL DOM */
 const splashScreen   = document.getElementById("splashScreen");
 const appEl          = document.getElementById("app");
 const btnAddTeam     = document.getElementById("btnAddTeam");
@@ -55,7 +55,7 @@ const statusDot      = document.getElementById("statusDot");
 const statusText     = document.getElementById("statusText");
 const chartCanvas    = document.getElementById("topChart");
 
-/* 4) CANVA DE SÍMBOLOS Y ECUACIONES EN EL FONDO */
+/* 4) CANVAS CON PARTÍCULAS (Inicia DESPUÉS de la animación para no trabar el celular) */
 function initMathBackgroundCanvas() {
   const canvas = document.getElementById("mathBgCanvas");
   if (!canvas) return;
@@ -69,25 +69,26 @@ function initMathBackgroundCanvas() {
     height = canvas.height = window.innerHeight;
   });
 
-  const mathItems = ["π", "∑", "∫", "√x", "e^{iπ}+1=0", "f(x)", "Δ", "∞", "d/dx", "lim", "x² + y² = r²", "sin(x)", "cos(θ)", "∇", "α", "β", "λ"];
+  const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)", "∇", "α", "β"];
 
-  const particles = Array.from({ length: 30 }, () => ({
+  const particles = Array.from({ length: 20 }, () => ({
     text: mathItems[Math.floor(Math.random() * mathItems.length)],
     x: Math.random() * width,
     y: Math.random() * height,
-    size: 14 + Math.random() * 20,
-    speedY: -0.3 - Math.random() * 0.4,
-    speedX: (Math.random() - 0.5) * 0.3,
-    opacity: 0.15 + Math.random() * 0.3,
+    size: 14 + Math.random() * 16,
+    speedY: -0.2 - Math.random() * 0.3,
+    speedX: (Math.random() - 0.5) * 0.2,
+    opacity: 0.12 + Math.random() * 0.25,
     color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)]
   }));
 
   function animate() {
+    if (!isCanvasRunning) return;
     ctx.clearRect(0, 0, width, height);
     particles.forEach(p => {
       p.y += p.speedY;
       p.x += p.speedX;
-      if (p.y < -40) { p.y = height + 40; p.x = Math.random() * width; }
+      if (p.y < -30) { p.y = height + 30; p.x = Math.random() * width; }
       ctx.save();
       ctx.font = `600 ${p.size}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = p.color;
@@ -97,27 +98,32 @@ function initMathBackgroundCanvas() {
     });
     requestAnimationFrame(animate);
   }
+  
+  isCanvasRunning = true;
   animate();
 }
 
-/* 5) CONTROL Y SINCRO DE TIEMPO DEL SPLASH SCREEN */
+/* 5) TRANSICIÓN SIN LAG Y SYNCRONIZADA CON EL SPLASH */
 function initSplashScreen() {
-  // Sincronizado con los 3.2 segundos exactos de la animación de "Matemáticas" creciendo
+  // Espera 2.7 segundos (duración exacta de la animación CSS de Matemáticas agrandándose)
   setTimeout(() => {
     splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
     
+    // Activa la renderización del canvas de fondo
+    initMathBackgroundCanvas();
+
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         appEl.classList.add("visible");
       });
     });
 
-    setTimeout(() => splashScreen.remove(), 600);
-  }, 3100);
+    setTimeout(() => splashScreen.remove(), 500);
+  }, 2700);
 }
 
-/* 6) AUXILIARES UI */
+/* 6) AUXILIARES Y UTILERÍAS */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -135,7 +141,7 @@ function showToast(message, type = "") {
   toastEl.textContent = message;
   toastEl.className = "toast show " + type;
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => toastEl.classList.remove("show"), 2600);
+  showToast._timer = setTimeout(() => toastEl.classList.remove("show"), 2500);
 }
 
 function buildColorPresets() {
@@ -161,7 +167,7 @@ function highlightActiveSwatch() {
   });
 }
 
-/* 7) MODAL */
+/* 7) CONTROL DEL MODAL */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -196,7 +202,7 @@ function closeModal() {
 
 btnAddTeam.addEventListener("click", () => {
   if (Object.keys(teamsData).length >= MAX_TEAMS) {
-    showToast(`Límite alcanzado: máximo ${MAX_TEAMS} equipos`, "error");
+    showToast(`Máximo ${MAX_TEAMS} equipos alcanzado`, "error");
     return;
   }
   openAddModal();
@@ -206,7 +212,7 @@ btnCloseModal.addEventListener("click", closeModal);
 teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
-/* 8) OPERACIONES CON FIREBASE */
+/* 8) MANEJO DE BASE DE DATOS (FIREBASE) */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const name = teamNameInput.value.trim();
@@ -225,7 +231,7 @@ teamForm.addEventListener("submit", (e) => {
       score: 0,
       createdAt: firebase.database.ServerValue.TIMESTAMP
     })
-      .then(() => { showToast("Equipo creado 🎉", "success"); closeModal(); })
+      .then(() => { showToast("Equipo registrado 🎉", "success"); closeModal(); })
       .catch(err => showToast("Error: " + err.message, "error"));
   }
 });
@@ -245,7 +251,7 @@ function adjustScore(id, delta) {
   teamsRef.child(id).child("score").transaction(current => (current || 0) + Number(delta));
 }
 
-/* 9) RENDERIZADO */
+/* 9) RENDERIZADO GENERAL Y GRÁFICOS */
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
     .map(([id, data]) => ({ id, ...data, score: Number(data.score) || 0 }))
@@ -260,7 +266,6 @@ function renderRanking() {
   rankingListEl.innerHTML = "";
   if (sortedTeams.length === 0) {
     emptyStateEl.classList.remove("hidden");
-    previousScores = {};
     return;
   }
   emptyStateEl.classList.add("hidden");
@@ -290,15 +295,13 @@ function renderRanking() {
         <button class="score-btn minus" data-action="delta" data-delta="-5">-5</button>
         <div class="custom-score">
           <input type="number" placeholder="±#" data-role="custom-input">
-          <button class="btn-apply" data-action="apply-custom">Aplicar</button>
+          <button class="btn-apply" data-action="apply-custom">Ok</button>
         </div>
       </div>
     `;
 
     rankingListEl.appendChild(row);
   });
-
-  previousScores = Object.fromEntries(sortedTeams.map(t => [t.id, t.score]));
 }
 
 rankingListEl.addEventListener("click", (e) => {
@@ -361,7 +364,7 @@ function renderChart() {
         backgroundColor: backgrounds,
         borderColor: top5.map(t => t.color),
         borderWidth: 1.5,
-        borderRadius: 10
+        borderRadius: 8
       }]
     },
     options: {
@@ -398,6 +401,5 @@ db.ref(".info/connected").on("value", (snap) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
-  initMathBackgroundCanvas();
   initSplashScreen();
 });
