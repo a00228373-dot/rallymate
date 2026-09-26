@@ -17,85 +17,36 @@
 </head>
 <body>
 
-  <!-- Canvas de fondo interactivo con partículas -->
+  <!-- Canvas de fondo interactivo -->
   <canvas id="mathBgCanvas" class="math-bg-canvas"></canvas>
 
-  <!-- Resplandor dinámico que sigue al cursor o toque -->
+  <!-- Resplandor del cursor -->
   <div id="cursorGlow" class="cursor-glow" aria-hidden="true"></div>
 
   <!-- ===================================================== -->
-  <!-- SPLASH SCREEN CON VENADO CYBERPUNK Y ANIMACIONES      -->
+  <!-- PANTALLA DE CARGA CON VENADO REAL Y ANIMACIÓN COMPLETA -->
   <!-- ===================================================== -->
   <div id="splashScreen" class="splash-screen">
     <div class="splash-grid"></div>
     <div class="splash-glow"></div>
 
-    <div class="svg-logo-container">
-      <svg class="splash-svg" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="mathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#00f5ff" />
-            <stop offset="100%" stop-color="#8b5cf6" />
-          </linearGradient>
+    <!-- Indicador táctil para desbloqueo de audio en móviles -->
+    <div id="audioStartPrompt" class="audio-prompt">Toca en cualquier lugar para iniciar</div>
 
-          <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
-            <stop offset="100%" stop-color="#00f5ff" stop-opacity="0.2" />
-          </linearGradient>
+    <div class="splash-content">
+      
+      <!-- Venado Cyberpunk Imagen / SVG real -->
+      <div id="splashDeerContainer" class="splash-deer-container">
+        <img src="Diseño sin título.png" alt="Venado Cyberpunk" class="cyber-deer-img" id="splashDeerImg">
+      </div>
 
-          <!-- Filtro de resplandor blanco constante para el venado -->
-          <filter id="whiteGlowFilter" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="3" result="blur1" />
-            <feGaussianBlur stdDeviation="8" result="blur2" />
-            <feMerge>
-              <feMergeNode in="blur2" />
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+      <!-- Textos (Se van hacia un lado y desaparecen) -->
+      <div id="splashTextGroup" class="splash-text-group">
+        <h2 class="rally-text">Rally de</h2>
+        <h1 class="math-text">Matemáticas</h1>
+        <p class="tec-text">TEC DE MONTERREY</p>
+      </div>
 
-        <!-- Anillos de órbita exterior -->
-        <g class="orbit-group">
-          <circle class="orbit-ring ring-outer" cx="300" cy="110" r="75" />
-          <circle class="orbit-ring ring-mid" cx="300" cy="110" r="60" />
-        </g>
-
-        <!-- VENADO SVG EN EL CENTRO (En lugar de la sumatoria) -->
-        <g id="splashDeerGroup" class="splash-deer-group">
-          <g class="cyber-deer-wrapper" filter="url(#whiteGlowFilter)">
-            <!-- Silueta del venado cyberpunk (Mitad orgánico / Mitad circuito) -->
-            <path class="deer-stroke" d="
-              M 300,50 L 290,30 L 275,15 L 282,32 L 260,20 L 270,42 L 285,55 L 265,75 L 250,50 L 258,80 L 280,100 L 288,120 L 295,145 L 300,165 
-              L 305,145 L 312,120 L 320,100 L 342,80 L 350,50 L 335,75 L 315,55 L 330,42 L 340,20 L 318,32 L 325,15 L 310,30 Z" 
-              fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round" />
-            
-            <!-- Circuitos y nodos internos del lado derecho -->
-            <path class="deer-circuits" d="
-              M 300,65 L 315,55 M 308,80 L 330,70 M 312,100 L 338,92 M 300,115 L 325,115 M 300,135 L 318,135
-              M 315,55 L 325,55 M 330,70 L 340,65 M 338,92 L 345,98" 
-              fill="none" stroke="#00f5ff" stroke-width="1.8" stroke-linecap="round" />
-            
-            <circle cx="325" cy="55" r="2.5" fill="#ffffff" />
-            <circle cx="340" cy="65" r="2.5" fill="#00f5ff" />
-            <circle cx="345" cy="98" r="2.5" fill="#ffffff" />
-            <circle cx="325" cy="115" r="2.5" fill="#00f5ff" />
-            <circle cx="318" cy="135" r="2.5" fill="#ffffff" />
-            
-            <!-- Ojo del venado -->
-            <polygon points="288,92 294,95 290,100" fill="#ffffff" />
-            <polygon points="312,92 306,95 310,100" fill="#00f5ff" />
-          </g>
-        </g>
-
-        <!-- TEXTOS: Rally de Matemáticas (Se deslizan hacia un lado y desaparecen) -->
-        <g id="splashTextGroup" class="splash-text-group">
-          <text x="300" y="235" class="svg-text rally-text" text-anchor="middle">Rally de</text>
-          <text x="300" y="275" class="svg-text math-text" text-anchor="middle">Matemáticas</text>
-          <text x="300" y="315" class="svg-text tec-text" text-anchor="middle">TEC DE MONTERREY</text>
-        </g>
-
-      </svg>
     </div>
   </div>
 
@@ -106,22 +57,9 @@
 
     <header class="app-header interactive-card">
       <div class="header-brand">
-        <!-- Ícono del Header donde aterriza el Venado SVG -->
+        <!-- Contenedor donde aterriza el venado encogido -->
         <div class="brand-icon-wrapper" id="headerBrandIcon">
-          <svg class="header-deer-svg" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-            <g class="cyber-deer-mini" filter="drop-shadow(0 0 4px #ffffff)">
-              <path d="M 50,10 L 44,22 L 34,12 L 38,23 L 24,15 L 31,30 L 41,38 L 28,52 L 38,68 L 44,82 L 50,110 L 56,82 L 62,68 L 72,52 L 59,38 L 69,30 L 76,15 L 62,23 L 66,12 L 56,22 Z" 
-                    fill="none" stroke="#ffffff" stroke-width="3" stroke-linejoin="round" />
-              <path d="M 50,22 L 60,15 M 54,32 L 68,26 M 56,44 L 72,38 M 50,55 L 65,55" 
-                    fill="none" stroke="#00f5ff" stroke-width="2" stroke-linecap="round" />
-              <circle cx="60" cy="15" r="2" fill="#ffffff" />
-              <circle cx="68" cy="26" r="2" fill="#00f5ff" />
-              <circle cx="72" cy="38" r="2" fill="#ffffff" />
-              <circle cx="65" cy="55" r="2" fill="#00f5ff" />
-              <polygon points="42,38 46,40 43,44" fill="#ffffff" />
-              <polygon points="58,38 54,40 57,44" fill="#00f5ff" />
-            </g>
-          </svg>
+          <img src="Diseño sin título.png" alt="Logo Venado" class="header-deer-img">
         </div>
         <div class="header-titles">
           <div class="live-pill"><span class="pulse-ring"></span> EN VIVO</div>
@@ -139,7 +77,7 @@
 
     <main class="dashboard">
 
-      <!-- Gráfico Top 5 (Sin emoji) -->
+      <!-- Top 5 (Sin emojis) -->
       <section class="card chart-card interactive-card">
         <div class="card-header-flex">
           <h2 class="card-title">Top 5 Liderazgo</h2>
@@ -151,7 +89,7 @@
         <p id="chartEmptyState" class="empty-state">Aún no hay puntajes registrados.</p>
       </section>
 
-      <!-- Ranking General (Sin emoji) -->
+      <!-- Tabla General (Sin emojis) -->
       <section class="card ranking-card interactive-card">
         <div class="card-header-flex">
           <h2 class="card-title">Tabla General de Posiciones</h2>
@@ -171,9 +109,7 @@
     </footer>
   </div>
 
-  <!-- ===================================================== -->
-  <!-- MODAL AGREGAR / EDITAR EQUIPO                         -->
-  <!-- ===================================================== -->
+  <!-- MODAL AGREGAR / EDITAR EQUIPO -->
   <div id="teamModal" class="modal-overlay hidden">
     <div class="modal interactive-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-header">
