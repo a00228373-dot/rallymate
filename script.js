@@ -1,11 +1,9 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   Lógica: Firebase + Chart.js + Animación SVG Splash
+   Lógica JavaScript: Firebase + Chart.js + Splash Sync
    ===================================================== */
 
-/* -----------------------------------------------------
-   1) CONFIGURACIÓN DE FIREBASE
------------------------------------------------------- */
+/* 1) FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyBgVBaF5tdGRRSFkvIddbLHmwOXgi8gqTk",
   authDomain: "rallymatematicas-b1aa0.firebaseapp.com",
@@ -20,9 +18,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const teamsRef = db.ref("teams");
 
-/* -----------------------------------------------------
-   2) ESTADO GLOBAL
------------------------------------------------------- */
+/* 2) ESTADO GLOBAL */
 const MAX_TEAMS = 20;
 let teamsData = {};
 let sortedTeams = [];
@@ -35,15 +31,11 @@ const COLOR_PRESETS = [
   "#10b981", "#f59e0b", "#f43f5e", "#ffffff"
 ];
 
-/* -----------------------------------------------------
-   3) REFERENCIAS DOM
------------------------------------------------------- */
+/* 3) REFERENCIAS DOM */
 const splashScreen   = document.getElementById("splashScreen");
 const appEl          = document.getElementById("app");
-
 const btnAddTeam     = document.getElementById("btnAddTeam");
 const teamsCounterEl = document.getElementById("teamsCounter");
-
 const rankingListEl  = document.getElementById("rankingList");
 const emptyStateEl   = document.getElementById("emptyState");
 const chartEmptyEl   = document.getElementById("chartEmptyState");
@@ -63,9 +55,7 @@ const statusDot      = document.getElementById("statusDot");
 const statusText     = document.getElementById("statusText");
 const chartCanvas    = document.getElementById("topChart");
 
-/* =====================================================
-   4) FONDO DE SÍMBOLOS MATEMÁTICOS (CANVAS)
-   ===================================================== */
+/* 4) CANVA DE SÍMBOLOS Y ECUACIONES EN EL FONDO */
 function initMathBackgroundCanvas() {
   const canvas = document.getElementById("mathBgCanvas");
   if (!canvas) return;
@@ -79,37 +69,25 @@ function initMathBackgroundCanvas() {
     height = canvas.height = window.innerHeight;
   });
 
-  const mathItems = [
-    "π", "∑", "∫", "√x", "e^{iπ}+1=0", "f(x)", "Δ", "∞",
-    "d/dx", "lim", "x² + y² = r²", "sin(x)", "cos(θ)", "∇",
-    "α", "β", "λ", "3.14159", "E = mc²", "∫ x dx", "±"
-  ];
+  const mathItems = ["π", "∑", "∫", "√x", "e^{iπ}+1=0", "f(x)", "Δ", "∞", "d/dx", "lim", "x² + y² = r²", "sin(x)", "cos(θ)", "∇", "α", "β", "λ"];
 
-  const particles = Array.from({ length: 32 }, () => ({
+  const particles = Array.from({ length: 30 }, () => ({
     text: mathItems[Math.floor(Math.random() * mathItems.length)],
     x: Math.random() * width,
     y: Math.random() * height,
-    size: 14 + Math.random() * 22,
-    speedY: -0.3 - Math.random() * 0.5,
+    size: 14 + Math.random() * 20,
+    speedY: -0.3 - Math.random() * 0.4,
     speedX: (Math.random() - 0.5) * 0.3,
-    opacity: 0.15 + Math.random() * 0.35,
+    opacity: 0.15 + Math.random() * 0.3,
     color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)]
   }));
 
   function animate() {
     ctx.clearRect(0, 0, width, height);
-
     particles.forEach(p => {
       p.y += p.speedY;
       p.x += p.speedX;
-
-      if (p.y < -40) {
-        p.y = height + 40;
-        p.x = Math.random() * width;
-      }
-      if (p.x < -40) p.x = width + 40;
-      if (p.x > width + 40) p.x = -40;
-
+      if (p.y < -40) { p.y = height + 40; p.x = Math.random() * width; }
       ctx.save();
       ctx.font = `600 ${p.size}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = p.color;
@@ -117,18 +95,14 @@ function initMathBackgroundCanvas() {
       ctx.fillText(p.text, p.x, p.y);
       ctx.restore();
     });
-
     requestAnimationFrame(animate);
   }
-
   animate();
 }
 
-/* =====================================================
-   5) CONTROL DEL SPLASH Y REVELADO DE LA APP
-   ===================================================== */
+/* 5) CONTROL Y SINCRO DE TIEMPO DEL SPLASH SCREEN */
 function initSplashScreen() {
-  // Permite que la animación de giro de los anillos luzca antes de cargar la app
+  // Sincronizado con los 3.2 segundos exactos de la animación de "Matemáticas" creciendo
   setTimeout(() => {
     splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -139,13 +113,11 @@ function initSplashScreen() {
       });
     });
 
-    setTimeout(() => splashScreen.remove(), 800);
-  }, 2800);
+    setTimeout(() => splashScreen.remove(), 600);
+  }, 3100);
 }
 
-/* =====================================================
-   6) UTILIDADES DE UI Y COLORES
-   ===================================================== */
+/* 6) AUXILIARES UI */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -156,19 +128,14 @@ function hexToRgba(hex, alpha) {
   const clean = hex.replace("#", "");
   const full = clean.length === 3 ? clean.split("").map(c => c + c).join("") : clean;
   const bigint = parseInt(full, 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  return `rgba(${(bigint >> 16) & 255}, ${(bigint >> 8) & 255}, ${bigint & 255}, ${alpha})`;
 }
 
 function showToast(message, type = "") {
   toastEl.textContent = message;
   toastEl.className = "toast show " + type;
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, 2600);
+  showToast._timer = setTimeout(() => toastEl.classList.remove("show"), 2600);
 }
 
 function buildColorPresets() {
@@ -194,9 +161,7 @@ function highlightActiveSwatch() {
   });
 }
 
-/* =====================================================
-   7) LÓGICA MODAL
-   ===================================================== */
+/* 7) MODAL */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -230,8 +195,7 @@ function closeModal() {
 }
 
 btnAddTeam.addEventListener("click", () => {
-  const count = Object.keys(teamsData).length;
-  if (count >= MAX_TEAMS) {
+  if (Object.keys(teamsData).length >= MAX_TEAMS) {
     showToast(`Límite alcanzado: máximo ${MAX_TEAMS} equipos`, "error");
     return;
   }
@@ -239,76 +203,49 @@ btnAddTeam.addEventListener("click", () => {
 });
 
 btnCloseModal.addEventListener("click", closeModal);
-teamModal.addEventListener("click", (e) => {
-  if (e.target === teamModal) closeModal();
-});
-
+teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
 teamColorInput.addEventListener("input", highlightActiveSwatch);
 
-/* =====================================================
-   8) GUARDAR Y ELIMINAR EQUIPOS
-   ===================================================== */
+/* 8) OPERACIONES CON FIREBASE */
 teamForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const name = teamNameInput.value.trim();
   const color = teamColorInput.value;
 
-  if (!name) {
-    showToast("Escribe un nombre o número de equipo", "error");
-    return;
-  }
+  if (!name) { showToast("Ingresa un nombre de equipo", "error"); return; }
 
   if (editingTeamId) {
     teamsRef.child(editingTeamId).update({ name, color })
-      .then(() => {
-        showToast("Equipo actualizado ✅", "success");
-        closeModal();
-      })
-      .catch(err => showToast("Error al guardar: " + err.message, "error"));
+      .then(() => { showToast("Equipo actualizado ✅", "success"); closeModal(); })
+      .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    const count = Object.keys(teamsData).length;
-    if (count >= MAX_TEAMS) {
-      showToast(`Límite alcanzado: máximo ${MAX_TEAMS} equipos`, "error");
-      return;
-    }
     teamsRef.push({
       name,
       color,
       score: 0,
       createdAt: firebase.database.ServerValue.TIMESTAMP
     })
-      .then(() => {
-        showToast("Equipo agregado 🎉", "success");
-        closeModal();
-      })
-      .catch(err => showToast("Error al agregar: " + err.message, "error"));
+      .then(() => { showToast("Equipo creado 🎉", "success"); closeModal(); })
+      .catch(err => showToast("Error: " + err.message, "error"));
   }
 });
 
 btnDeleteTeam.addEventListener("click", () => {
   if (!editingTeamId) return;
   const team = teamsData[editingTeamId];
-  const ok = confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`);
-  if (!ok) return;
-
-  teamsRef.child(editingTeamId).remove()
-    .then(() => {
-      showToast("Equipo eliminado", "success");
-      closeModal();
-    })
-    .catch(err => showToast("Error al eliminar: " + err.message, "error"));
+  if (confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`)) {
+    teamsRef.child(editingTeamId).remove()
+      .then(() => { showToast("Equipo eliminado", "success"); closeModal(); })
+      .catch(err => showToast("Error: " + err.message, "error"));
+  }
 });
 
 function adjustScore(id, delta) {
   if (!delta || isNaN(delta)) return;
-  teamsRef.child(id).child("score").transaction(current => {
-    return (current || 0) + Number(delta);
-  }).catch(err => showToast("Error al actualizar puntaje: " + err.message, "error"));
+  teamsRef.child(id).child("score").transaction(current => (current || 0) + Number(delta));
 }
 
-/* =====================================================
-   9) RENDERIZADO TABLA Y GRÁFICO
-   ===================================================== */
+/* 9) RENDERIZADO */
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
     .map(([id, data]) => ({ id, ...data, score: Number(data.score) || 0 }))
@@ -316,13 +253,11 @@ function recomputeSortedTeams() {
 }
 
 function renderCounter() {
-  const count = Object.keys(teamsData).length;
-  teamsCounterEl.textContent = `${count} / ${MAX_TEAMS} equipos`;
+  teamsCounterEl.textContent = `${Object.keys(teamsData).length} / ${MAX_TEAMS} equipos`;
 }
 
 function renderRanking() {
   rankingListEl.innerHTML = "";
-
   if (sortedTeams.length === 0) {
     emptyStateEl.classList.remove("hidden");
     previousScores = {};
@@ -332,14 +267,8 @@ function renderRanking() {
 
   sortedTeams.forEach((team, index) => {
     const rank = index + 1;
-    const prevScore = previousScores[team.id];
-    let pulseClass = "";
-    if (prevScore !== undefined && prevScore !== team.score) {
-      pulseClass = team.score > prevScore ? " score-pulse-up" : " score-pulse-down";
-    }
-
     const row = document.createElement("div");
-    row.className = "team-row" + pulseClass;
+    row.className = "team-row";
     if (rank <= 3) row.classList.add(`rank-${rank}`);
     row.dataset.id = team.id;
 
@@ -351,8 +280,8 @@ function renderRanking() {
         <div class="team-score">${team.score} pts</div>
       </div>
       <div class="row-icons">
-        <button class="icon-btn icon-edit" title="Editar" data-action="edit">✎</button>
-        <button class="icon-btn icon-delete" title="Eliminar" data-action="delete">🗑</button>
+        <button class="icon-btn" title="Editar" data-action="edit">✎</button>
+        <button class="icon-btn" title="Eliminar" data-action="delete">🗑</button>
       </div>
       <div class="team-controls">
         <button class="score-btn plus" data-action="delta" data-delta="1">+1</button>
@@ -360,7 +289,7 @@ function renderRanking() {
         <button class="score-btn plus" data-action="delta" data-delta="10">+10</button>
         <button class="score-btn minus" data-action="delta" data-delta="-5">-5</button>
         <div class="custom-score">
-          <input type="number" placeholder="±#" data-role="custom-input" aria-label="Puntos personalizados">
+          <input type="number" placeholder="±#" data-role="custom-input">
           <button class="btn-apply" data-action="apply-custom">Aplicar</button>
         </div>
       </div>
@@ -380,33 +309,20 @@ rankingListEl.addEventListener("click", (e) => {
   if (!actionEl) return;
 
   const action = actionEl.dataset.action;
-
-  if (action === "edit") {
-    openEditModal(id);
-  } else if (action === "delete") {
-    const team = teamsData[id];
-    if (confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`)) {
-      teamsRef.child(id).remove()
-        .then(() => showToast("Equipo eliminado", "success"))
-        .catch(err => showToast("Error: " + err.message, "error"));
-    }
+  if (action === "edit") openEditModal(id);
+  else if (action === "delete") {
+    if (confirm("¿Eliminar este equipo?")) teamsRef.child(id).remove();
   } else if (action === "delta") {
     adjustScore(id, actionEl.dataset.delta);
   } else if (action === "apply-custom") {
     const input = row.querySelector('[data-role="custom-input"]');
-    const value = parseInt(input.value, 10);
-    if (isNaN(value) || value === 0) {
-      showToast("Ingresa una cantidad válida", "error");
-      return;
-    }
-    adjustScore(id, value);
-    input.value = "";
+    const val = parseInt(input.value, 10);
+    if (!isNaN(val) && val !== 0) { adjustScore(id, val); input.value = ""; }
   }
 });
 
 function renderChart() {
   const top5 = sortedTeams.slice(0, 5);
-
   if (top5.length === 0) {
     chartEmptyEl.classList.remove("hidden");
     chartCanvas.classList.add("hidden");
@@ -421,18 +337,16 @@ function renderChart() {
   const ctx = chartCanvas.getContext("2d");
 
   const backgrounds = top5.map(t => {
-    const gradient = ctx.createLinearGradient(0, 0, chartCanvas.width || 300, 0);
-    gradient.addColorStop(0, hexToRgba(t.color, 0.4));
-    gradient.addColorStop(1, hexToRgba(t.color, 0.95));
-    return gradient;
+    const g = ctx.createLinearGradient(0, 0, chartCanvas.width || 300, 0);
+    g.addColorStop(0, hexToRgba(t.color, 0.35));
+    g.addColorStop(1, hexToRgba(t.color, 0.95));
+    return g;
   });
-  const borders = top5.map(t => hexToRgba(t.color, 1));
 
   if (topChart) {
     topChart.data.labels = labels;
     topChart.data.datasets[0].data = data;
     topChart.data.datasets[0].backgroundColor = backgrounds;
-    topChart.data.datasets[0].borderColor = borders;
     topChart.update();
     return;
   }
@@ -445,40 +359,20 @@ function renderChart() {
         label: "Puntos",
         data,
         backgroundColor: backgrounds,
-        borderColor: borders,
+        borderColor: top5.map(t => t.color),
         borderWidth: 1.5,
-        borderRadius: 12,
-        maxBarThickness: 48
+        borderRadius: 10
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: "y",
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#0d1021",
-          borderColor: "#00f5ff",
-          borderWidth: 1,
-          titleColor: "#ffffff",
-          bodyColor: "#00f5ff",
-          padding: 12,
-          cornerRadius: 12
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        x: {
-          beginAtZero: true,
-          ticks: { color: "#94a3b8", precision: 0 },
-          grid: { color: "rgba(255,255,255,0.05)" }
-        },
-        y: {
-          ticks: { color: "#ffffff", font: { weight: "600" } },
-          grid: { display: false }
-        }
-      },
-      animation: { duration: 500, easing: "easeOutQuint" }
+        x: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { ticks: { color: "#ffffff", font: { weight: "600" } }, grid: { display: false } }
+      }
     }
   });
 }
@@ -490,9 +384,7 @@ function renderApp() {
   renderChart();
 }
 
-/* =====================================================
-   10) LISTENERS TIEMPO REAL
-   ===================================================== */
+/* 10) INICIALIZACIÓN */
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
   renderApp();
@@ -501,11 +393,9 @@ teamsRef.on("value", (snapshot) => {
 db.ref(".info/connected").on("value", (snap) => {
   const connected = snap.val() === true;
   statusDot.classList.toggle("online", connected);
-  statusDot.classList.toggle("offline", !connected);
-  statusText.textContent = connected ? "Conectado en tiempo real" : "Sin conexión — reintentando...";
+  statusText.textContent = connected ? "Conectado en tiempo real" : "Sin conexión";
 });
 
-/* INICIALIZACIÓN */
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
   initMathBackgroundCanvas();
