@@ -34,12 +34,42 @@
 
     <div class="splash-content">
       
-      <!-- Contenedor del Venado Cyberpunk -->
+      <!-- Contenedor del Venado Cyberpunk (Vectorial 100% Transparente) -->
       <div id="splashDeerContainer" class="splash-deer-container">
-        <img src="venado-cyberpunk.svg" alt="Venado Cyberpunk" class="cyber-deer-img" id="splashDeerImg">
+        <svg viewBox="0 0 500 500" class="cyber-deer-svg" xmlns="http://www.w3.org/2000/svg">
+          <g id="venado-cyberpunk">
+            <!-- Mitad Izquierda: Silueta Venado en Blanco -->
+            <path d="M250 440 L180 375 C165 330 160 290 150 260 L180 240 L220 280 L250 340 Z" fill="#FFFFFF"/>
+            <path d="M150 260 C125 240 110 220 135 210 C155 210 175 235 175 245 Z" fill="#FFFFFF"/>
+            <path d="M200 220 L110 140 L50 70 L70 115 L110 150 L85 170 L125 190 L170 170 L220 210 Z" fill="#FFFFFF"/>
+            <ellipse cx="195" cy="245" rx="8" ry="4" fill="#03050c" transform="rotate(-15 195 245)"/>
+
+            <!-- Mitad Derecha: Circuito Cyberpunk Neón Cyan -->
+            <g stroke="#00F5FF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <path d="M250 210 L300 170 L350 190 L390 170" />
+              <path d="M300 170 L320 125 L375 90 L425 50" />
+              <path d="M320 125 L280 80 L335 35" />
+              <path d="M375 90 L410 120" />
+              <path d="M350 190 L395 215" />
+              <path d="M250 240 L290 250 L325 230 L345 250" />
+              <path d="M290 250 L315 290 L285 330 L250 355" />
+              <path d="M315 290 L350 300 L355 340" />
+              <path d="M250 355 L250 440" />
+
+              <!-- Nodos de Circuito -->
+              <circle cx="390" cy="170" r="4.5" fill="#00F5FF" />
+              <circle cx="425" cy="50" r="4.5" fill="#00F5FF" />
+              <circle cx="335" cy="35" r="4.5" fill="#00F5FF" />
+              <circle cx="410" cy="120" r="4.5" fill="#00F5FF" />
+              <circle cx="395" cy="215" r="4.5" fill="#00F5FF" />
+              <circle cx="345" cy="250" r="4.5" fill="#00F5FF" />
+              <circle cx="355" cy="340" r="4.5" fill="#00F5FF" />
+            </g>
+          </g>
+        </svg>
       </div>
 
-      <!-- Textos (Se desplazan a la izquierda) -->
+      <!-- Textos -->
       <div id="splashTextGroup" class="splash-text-group">
         <h2 class="rally-text">Rally de</h2>
         <h1 class="math-text">Matemáticas</h1>
@@ -56,9 +86,22 @@
 
     <header class="app-header interactive-card">
       <div class="header-brand">
-        <!-- Contenedor del venado en el encabezado -->
+        <!-- Logo en el encabezado -->
         <div class="brand-icon-wrapper" id="headerBrandIcon">
-          <img src="venado-cyberpunk.svg" alt="Logo Venado" class="header-deer-img">
+          <svg viewBox="0 0 500 500" class="header-deer-svg" xmlns="http://www.w3.org/2000/svg">
+            <g id="header-venado">
+              <path d="M250 440 L180 375 C165 330 160 290 150 260 L180 240 L220 280 L250 340 Z" fill="#FFFFFF"/>
+              <path d="M150 260 C125 240 110 220 135 210 C155 210 175 235 175 245 Z" fill="#FFFFFF"/>
+              <path d="M200 220 L110 140 L50 70 L70 115 L110 150 L85 170 L125 190 L170 170 L220 210 Z" fill="#FFFFFF"/>
+              <g stroke="#00F5FF" stroke-width="4" stroke-linecap="round" fill="none">
+                <path d="M250 210 L300 170 L350 190 L390 170" />
+                <path d="M300 170 L320 125 L375 90 L425 50" />
+                <path d="M250 240 L290 250 L315 290 L250 355" />
+                <circle cx="390" cy="170" r="5" fill="#00F5FF" />
+                <circle cx="425" cy="50" r="5" fill="#00F5FF" />
+              </g>
+            </g>
+          </svg>
         </div>
         <div class="header-titles">
           <div class="live-pill"><span class="pulse-ring"></span> EN VIVO</div>
