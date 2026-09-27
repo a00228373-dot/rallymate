@@ -286,12 +286,14 @@ function runSplashSequence() {
   if (audioStartPrompt) audioStartPrompt.remove();
   AudioFX.init();
 
+  // 1. Desplazar texto
   setTimeout(() => {
     if (splashTextGroup) {
       splashTextGroup.classList.add("slide-out");
     }
   }, 800);
 
+  // 2. Expandir Venado Cyberpunk y reproducir sonido de expansión
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.add("expand-deer");
@@ -299,6 +301,7 @@ function runSplashSequence() {
     AudioFX.playMathExpansion();
   }, 1500);
 
+  // 3. Reducir Venado suavemente hacia la esquina
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.remove("expand-deer");
@@ -306,6 +309,7 @@ function runSplashSequence() {
     }
   }, 2800);
 
+  // 4. Ocultar pantalla de carga e iniciar la app
   setTimeout(() => {
     if (splashScreen) splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
