@@ -169,7 +169,7 @@ const statusText          = document.getElementById("statusText");
 const chartCanvas         = document.getElementById("topChart");
 const cursorGlow          = document.getElementById("cursorGlow");
 
-/* 5) FONDO INTERACTIVO */
+/* 5) FONDO INTERACTIVO CON FÓRMULAS VIBRANTES Y ANIMADAS */
 let mouseX = -500;
 let mouseY = -500;
 const mouseParticles = [];
@@ -217,18 +217,35 @@ function initMathBackgroundCanvas() {
     height = canvas.height = window.innerHeight;
   });
 
-  const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)"];
+  const mathItems = [
+    "π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)",
+    "e^iπ", "λ", "θ", "∇×F", "x²", "α", "β", "Ω", "E=mc²", "ϕ"
+  ];
 
-  const bgParticles = Array.from({ length: 20 }, () => ({
-    text: mathItems[Math.floor(Math.random() * mathItems.length)],
-    x: Math.random() * width,
-    y: Math.random() * height,
-    size: 14 + Math.random() * 16,
-    speedY: -0.2 - Math.random() * 0.3,
-    speedX: (Math.random() - 0.5) * 0.2,
-    opacity: 0.12 + Math.random() * 0.2,
-    color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)]
-  }));
+  // Paleta vibrante y neón extendida
+  const vibrantColors = [
+    "#00f5ff", "#00ff88", "#ff007f", "#8b5cf6",
+    "#ffe600", "#ff6600", "#3b82f6", "#ff3399"
+  ];
+
+  const bgParticles = Array.from({ length: 32 }, () => {
+    const baseSize = 16 + Math.random() * 22;
+    return {
+      text: mathItems[Math.floor(Math.random() * mathItems.length)],
+      x: Math.random() * width,
+      y: Math.random() * height,
+      baseSize: baseSize,
+      size: baseSize,
+      speedY: -0.25 - Math.random() * 0.35,
+      speedX: (Math.random() - 0.5) * 0.3,
+      opacity: 0.35 + Math.random() * 0.35,
+      baseOpacity: 0.35 + Math.random() * 0.35,
+      color: vibrantColors[Math.floor(Math.random() * vibrantColors.length)],
+      rotation: (Math.random() - 0.5) * 0.4,
+      rotSpeed: (Math.random() - 0.5) * 0.02,
+      hoverProgress: 0
+    };
+  });
 
   function animate() {
     if (!isCanvasRunning) return;
@@ -237,16 +254,52 @@ function initMathBackgroundCanvas() {
     bgParticles.forEach(p => {
       p.y += p.speedY;
       p.x += p.speedX;
-      if (p.y < -30) { p.y = height + 30; p.x = Math.random() * width; }
+      p.rotation += p.rotSpeed * (1 + p.hoverProgress * 3);
+
+      if (p.y < -40) {
+        p.y = height + 40;
+        p.x = Math.random() * width;
+      }
+
+      // Detección de proximidad al mouse (animación al pasar por encima)
+      const dx = p.x - mouseX;
+      const dy = p.y - mouseY;
+      const dist = Math.hypot(dx, dy);
+      const hoverRadius = 130;
+
+      if (dist < hoverRadius) {
+        p.hoverProgress = Math.min(1, p.hoverProgress + 0.12);
+        // Empuje suave al rozar con el cursor
+        const angle = Math.atan2(dy, dx);
+        const pushForce = (hoverRadius - dist) / hoverRadius;
+        p.x += Math.cos(angle) * pushForce * 2.2;
+        p.y += Math.sin(angle) * pushForce * 2.2;
+      } else {
+        p.hoverProgress = Math.max(0, p.hoverProgress - 0.05);
+      }
+
+      // Transiciones suaves calculadas por el progreso del hover
+      const currentSize = p.baseSize * (1 + p.hoverProgress * 0.9);
+      const currentOpacity = p.baseOpacity + (1 - p.baseOpacity) * p.hoverProgress;
 
       ctx.save();
-      ctx.font = `600 ${p.size}px 'Space Grotesk', sans-serif`;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.font = `700 ${currentSize}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.opacity;
-      ctx.fillText(p.text, p.x, p.y);
+      ctx.globalAlpha = currentOpacity;
+
+      // Efecto de resplandor intenso al interactuar
+      if (p.hoverProgress > 0) {
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 20 * p.hoverProgress;
+      }
+
+      ctx.fillText(p.text, 0, 0);
       ctx.restore();
     });
 
+    // Partículas creadas por el rastro del mouse
     for (let i = mouseParticles.length - 1; i >= 0; i--) {
       const p = mouseParticles[i];
       p.x += p.vx;
@@ -264,7 +317,7 @@ function initMathBackgroundCanvas() {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.alpha;
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 12;
       ctx.fill();
       ctx.restore();
     }
