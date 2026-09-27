@@ -1,12 +1,10 @@
 /* =====================================================
    RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   JavaScript: Secuencia del Venado + Audio Garantizado
    ===================================================== */
 
-/* 1) SINTETIZADOR FUTURISTA POTENTE CON UNLOCK AUTOMÁTICO */
+/* 1) SINTETIZADOR FUTURISTA CON UNLOCK DE AUDIO */
 const AudioFX = {
   ctx: null,
-  isUnlocked: false,
 
   init() {
     if (!this.ctx) {
@@ -14,65 +12,58 @@ const AudioFX = {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
     if (this.ctx && this.ctx.state === "suspended") {
-      this.ctx.resume().then(() => { this.isUnlocked = true; });
-    } else if (this.ctx && this.ctx.state === "running") {
-      this.isUnlocked = true;
+      this.ctx.resume();
     }
   },
 
-  // Sonido Futurista de Expansión
   playMathExpansion() {
     this.init();
     if (!this.ctx) return;
-
-    // Forzar el estado si fue suspendido por política de autoplay
-    if (this.ctx.state === "suspended") {
-      this.ctx.resume();
-    }
+    if (this.ctx.state === "suspended") this.ctx.resume();
 
     const now = this.ctx.currentTime;
 
-    // 1. Oscilador principal en barrido sci-fi
+    // Oscilador de barrido futurista sci-fi
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
 
     osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.exponentialRampToValueAtTime(1800, now + 1.2);
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(1600, now + 1.2);
 
     filter.type = "lowpass";
-    filter.frequency.setValueAtTime(150, now);
-    filter.frequency.exponentialRampToValueAtTime(6000, now + 1.0);
+    filter.frequency.setValueAtTime(120, now);
+    filter.frequency.exponentialRampToValueAtTime(5000, now + 1.0);
     filter.Q.setValueAtTime(8, now);
 
     gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.4, now + 0.3);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 1.6);
+    osc.stop(now + 1.5);
 
-    // 2. Impacto de bajos de fondo (Sub-bass)
+    // Impacto sub-bass
     const sub = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
     sub.type = "sine";
-    sub.frequency.setValueAtTime(70, now);
-    sub.frequency.exponentialRampToValueAtTime(250, now + 0.2);
-    sub.frequency.exponentialRampToValueAtTime(35, now + 1.3);
+    sub.frequency.setValueAtTime(65, now);
+    sub.frequency.exponentialRampToValueAtTime(220, now + 0.2);
+    sub.frequency.exponentialRampToValueAtTime(30, now + 1.2);
 
-    subGain.gain.setValueAtTime(0.45, now);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+    subGain.gain.setValueAtTime(0.4, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
 
     sub.connect(subGain);
     subGain.connect(this.ctx.destination);
 
     sub.start(now);
-    sub.stop(now + 1.3);
+    sub.stop(now + 1.2);
   },
 
   playPop() {
@@ -83,10 +74,10 @@ const AudioFX = {
     const gain = this.ctx.createGain();
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    osc.frequency.setValueAtTime(750, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.08);
 
-    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.setValueAtTime(0.25, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
     osc.connect(gain);
@@ -108,7 +99,7 @@ const AudioFX = {
       osc.type = "sine";
       osc.frequency.setValueAtTime(freq, now + index * 0.05);
 
-      gain.gain.setValueAtTime(0.12, now + index * 0.05);
+      gain.gain.setValueAtTime(0.1, now + index * 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.05 + 0.25);
 
       osc.connect(gain);
@@ -120,7 +111,6 @@ const AudioFX = {
   }
 };
 
-// Desbloquear audio al primer toque/clic
 window.addEventListener("pointerdown", () => AudioFX.init(), { once: true });
 window.addEventListener("keydown", () => AudioFX.init(), { once: true });
 
@@ -181,7 +171,7 @@ const statusText          = document.getElementById("statusText");
 const chartCanvas         = document.getElementById("topChart");
 const cursorGlow          = document.getElementById("cursorGlow");
 
-/* 5) CANAL DE PARTÍCULAS INTERACTIVAS DE FONDO */
+/* 5) FONDO INTERACTIVO */
 let mouseX = -500;
 let mouseY = -500;
 const mouseParticles = [];
@@ -189,9 +179,8 @@ const mouseParticles = [];
 function spawnParticles(x, y, amount = 6) {
   for (let i = 0; i < amount; i++) {
     mouseParticles.push({
-      x,
-      y,
-      size: 4 + Math.random() * 10,
+      x, y,
+      size: 4 + Math.random() * 8,
       color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)],
       vx: (Math.random() - 0.5) * 4,
       vy: (Math.random() - 0.5) * 4,
@@ -208,20 +197,8 @@ window.addEventListener("mousemove", (e) => {
     cursorGlow.style.left = `${mouseX}px`;
     cursorGlow.style.top = `${mouseY}px`;
   }
-  if (isCanvasRunning && Math.random() < 0.6) spawnParticles(mouseX, mouseY, 1);
+  if (isCanvasRunning && Math.random() < 0.5) spawnParticles(mouseX, mouseY, 1);
 });
-
-window.addEventListener("touchstart", (e) => {
-  const touch = e.touches[0];
-  if (!touch) return;
-  mouseX = touch.clientX;
-  mouseY = touch.clientY;
-  if (cursorGlow) {
-    cursorGlow.style.left = `${mouseX}px`;
-    cursorGlow.style.top = `${mouseY}px`;
-  }
-  spawnParticles(mouseX, mouseY, 8);
-}, { passive: true });
 
 function triggerHaptic() {
   if ("vibrate" in navigator) {
@@ -244,14 +221,14 @@ function initMathBackgroundCanvas() {
 
   const mathItems = ["π", "∑", "∫", "√x", "f(x)", "Δ", "∞", "d/dx", "lim", "sin(x)"];
 
-  const bgParticles = Array.from({ length: 22 }, () => ({
+  const bgParticles = Array.from({ length: 20 }, () => ({
     text: mathItems[Math.floor(Math.random() * mathItems.length)],
     x: Math.random() * width,
     y: Math.random() * height,
     size: 14 + Math.random() * 16,
     speedY: -0.2 - Math.random() * 0.3,
     speedX: (Math.random() - 0.5) * 0.2,
-    opacity: 0.12 + Math.random() * 0.25,
+    opacity: 0.12 + Math.random() * 0.2,
     color: COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)]
   }));
 
@@ -264,15 +241,10 @@ function initMathBackgroundCanvas() {
       p.x += p.speedX;
       if (p.y < -30) { p.y = height + 30; p.x = Math.random() * width; }
 
-      const dx = mouseX - p.x;
-      const dy = mouseY - p.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      let extraScale = dist < 120 ? 1 + (120 - dist) / 70 : 1;
-
       ctx.save();
-      ctx.font = `600 ${p.size * extraScale}px 'Space Grotesk', sans-serif`;
+      ctx.font = `600 ${p.size}px 'Space Grotesk', sans-serif`;
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = dist < 120 ? Math.min(1, p.opacity + 0.5) : p.opacity;
+      ctx.globalAlpha = p.opacity;
       ctx.fillText(p.text, p.x, p.y);
       ctx.restore();
     });
@@ -294,7 +266,7 @@ function initMathBackgroundCanvas() {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.alpha;
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 10;
       ctx.fill();
       ctx.restore();
     }
@@ -306,7 +278,7 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) SECUENCIA CORREGIDA DE CARGA, EXPANSIÓN Y POSICIONAMIENTO DEL VENADO */
+/* 6) SECUENCIA DE CARGA DEL VENADO */
 let splashSequenceStarted = false;
 
 function runSplashSequence() {
@@ -316,23 +288,22 @@ function runSplashSequence() {
   if (audioStartPrompt) audioStartPrompt.remove();
   AudioFX.init();
 
-  // PASO 1 (0.8s): El texto "Rally de Matemáticas" se desplaza lateralmente y se oculta
+  // FASE 1 (0.8s): Texto se desplaza a la izquierda
   setTimeout(() => {
     if (splashTextGroup) {
       splashTextGroup.classList.add("slide-out");
     }
   }, 800);
 
-  // PASO 2 (1.5s): El venado SE EXPANDE en el centro Y SUENA LO FUTURISTA
+  // FASE 2 (1.5s): El venado se expande + Sonido futurista
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.add("expand-deer");
     }
-    // Disparar sonido futurista exactamente durante la expansión
     AudioFX.playMathExpansion();
   }, 1500);
 
-  // PASO 3 (2.8s): El venado SE ENCOGE y viaja a la posición superior izquierda
+  // FASE 3 (2.8s): El venado se reduce y se traslada al encabezado
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.remove("expand-deer");
@@ -340,7 +311,7 @@ function runSplashSequence() {
     }
   }, 2800);
 
-  // PASO 4 (3.5s): Desaparece Splash Screen, muestra el Dashboard y activa fondo interactivo
+  // FASE 4 (3.5s): Aparece el Dashboard
   setTimeout(() => {
     if (splashScreen) splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -359,16 +330,13 @@ function runSplashSequence() {
   }, 3500);
 }
 
-// Iniciar secuencia automáticamente o al primer clic
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
 
-  // Iniciar automáticamente tras breve retardo
   setTimeout(() => {
     runSplashSequence();
   }, 300);
 
-  // Si el usuario toca la pantalla antes, arranca de inmediato con audio habilitado
   if (splashScreen) {
     splashScreen.addEventListener("pointerdown", () => {
       runSplashSequence();
@@ -376,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/* 7) FUNCIONES AUXILIARES Y RENDERIZADO */
+/* 7) FUNCIONES AUXILIARES Y LÓGICA DE TABLERO */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -421,7 +389,6 @@ function highlightActiveSwatch() {
   });
 }
 
-/* MODAL Y ACCIONES */
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -652,7 +619,7 @@ function renderApp() {
   renderChart();
 }
 
-/* CONEXIÓN FIREBASE */
+/* ESCUCHADORES DE FIREBASE */
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
   renderApp();
