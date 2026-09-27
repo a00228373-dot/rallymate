@@ -1,12 +1,25 @@
-/* =====================================================
-   RALLY DE MATEMÁTICAS — TEC DE MONTERREY
-   ===================================================== */
 
-/* 1) SINTETIZADOR FUTURISTA CON UNLOCK DE AUDIO */
+
 const AudioFX = {
   ctx: null,
 
+createContextInsideGesture() {
+    if (this.ctx) return; 
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    this.ctx = new AudioCtx();
+    
+    try {
+      const buf = this.ctx.createBuffer(1, 1, 22050);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.ctx.destination);
+      src.start(0);
+    } catch (_) {}
+  },
+
   init() {
+    
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
@@ -29,15 +42,15 @@ const AudioFX = {
 
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(80, now);
-    osc.frequency.exponentialRampToValueAtTime(1800, now + 1.2);
+    osc.frequency.exponentialRampToValueAtTime(1600, now + 1.2);
 
     filter.type = "lowpass";
     filter.frequency.setValueAtTime(120, now);
-    filter.frequency.exponentialRampToValueAtTime(6000, now + 1.0);
-    filter.Q.setValueAtTime(9, now);
+    filter.frequency.exponentialRampToValueAtTime(5000, now + 1.0);
+    filter.Q.setValueAtTime(8, now);
 
     gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.4, now + 0.3);
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.3);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
     osc.connect(filter);
@@ -51,10 +64,10 @@ const AudioFX = {
     const subGain = this.ctx.createGain();
     sub.type = "sine";
     sub.frequency.setValueAtTime(65, now);
-    sub.frequency.exponentialRampToValueAtTime(240, now + 0.2);
+    sub.frequency.exponentialRampToValueAtTime(220, now + 0.2);
     sub.frequency.exponentialRampToValueAtTime(30, now + 1.2);
 
-    subGain.gain.setValueAtTime(0.45, now);
+    subGain.gain.setValueAtTime(0.4, now);
     subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
 
     sub.connect(subGain);
@@ -109,10 +122,8 @@ const AudioFX = {
   }
 };
 
-window.addEventListener("pointerdown", () => AudioFX.init(), { once: true });
-window.addEventListener("keydown", () => AudioFX.init(), { once: true });
+window.addEventListener("keydown", () => { if (AudioFX.ctx && AudioFX.ctx.state === "suspended") AudioFX.ctx.resume(); }, { once: true });
 
-/* 2) CONFIGURACIÓN FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBgVBaF5tdGRRSFkvIddbLHmwOXgi8gqTk",
   authDomain: "rallymatematicas-b1aa0.firebaseapp.com",
@@ -127,7 +138,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const teamsRef = db.ref("teams");
 
-/* 3) ESTADO GLOBAL */
 const MAX_TEAMS = 20;
 let teamsData = {};
 let sortedTeams = [];
@@ -140,37 +150,35 @@ const COLOR_PRESETS = [
   "#10b981", "#f59e0b", "#f43f5e", "#ffffff"
 ];
 
-/* 4) ELEMENTOS DOM */
-const splashScreen           = document.getElementById("splashScreen");
-const splashDeerContainer    = document.getElementById("splashDeerContainer");
-const splashTextGroup        = document.getElementById("splashTextGroup");
-const audioStartPrompt      = document.getElementById("audioStartPrompt");
-const splashEnergyShockwave = document.getElementById("splashEnergyShockwave");
+const splashScreen        = document.getElementById("splashScreen");
+const tapToStart          = document.getElementById("tapToStart");
+const splashDeerContainer = document.getElementById("splashDeerContainer");
+const splashTextGroup     = document.getElementById("splashTextGroup");
+const cameraBlindFlash    = document.getElementById("cameraBlindFlash");
 
-const appEl                  = document.getElementById("app");
-const btnAddTeam             = document.getElementById("btnAddTeam");
-const teamsCounterEl         = document.getElementById("teamsCounter");
-const rankingListEl          = document.getElementById("rankingList");
-const emptyStateEl           = document.getElementById("emptyState");
-const chartEmptyEl           = document.getElementById("chartEmptyState");
+const appEl               = document.getElementById("app");
+const btnAddTeam          = document.getElementById("btnAddTeam");
+const teamsCounterEl      = document.getElementById("teamsCounter");
+const rankingListEl       = document.getElementById("rankingList");
+const emptyStateEl        = document.getElementById("emptyState");
+const chartEmptyEl        = document.getElementById("chartEmptyState");
 
-const teamModal              = document.getElementById("teamModal");
-const modalTitle             = document.getElementById("modalTitle");
-const teamForm               = document.getElementById("teamForm");
-const teamIdInput            = document.getElementById("teamId");
-const teamNameInput          = document.getElementById("teamName");
-const teamColorInput         = document.getElementById("teamColor");
-const colorPresetsEl         = document.getElementById("colorPresets");
-const btnCloseModal          = document.getElementById("btnCloseModal");
-const btnDeleteTeam          = document.getElementById("btnDeleteTeam");
+const teamModal           = document.getElementById("teamModal");
+const modalTitle          = document.getElementById("modalTitle");
+const teamForm            = document.getElementById("teamForm");
+const teamIdInput         = document.getElementById("teamId");
+const teamNameInput       = document.getElementById("teamName");
+const teamColorInput      = document.getElementById("teamColor");
+const colorPresetsEl      = document.getElementById("colorPresets");
+const btnCloseModal       = document.getElementById("btnCloseModal");
+const btnDeleteTeam       = document.getElementById("btnDeleteTeam");
 
-const toastEl                = document.getElementById("toast");
-const statusDot              = document.getElementById("statusDot");
-const statusText             = document.getElementById("statusText");
-const chartCanvas            = document.getElementById("topChart");
-const cursorGlow             = document.getElementById("cursorGlow");
+const toastEl             = document.getElementById("toast");
+const statusDot           = document.getElementById("statusDot");
+const statusText          = document.getElementById("statusText");
+const chartCanvas         = document.getElementById("topChart");
+const cursorGlow          = document.getElementById("cursorGlow");
 
-/* 5) FONDO INTERACTIVO CON FÓRMULAS VIBRANTES Y ANIMADAS */
 let mouseX = -500;
 let mouseY = -500;
 const mouseParticles = [];
@@ -324,71 +332,125 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) NUEVA SECUENCIA DE ANIMACIÓN DEL VENADO */
 let splashSequenceStarted = false;
+let splashCompleted = false;
+
+function skipSplashSequence() {
+  if (splashCompleted) return;
+  splashCompleted = true;
+
+  if (splashScreen && splashScreen.parentNode) {
+    splashScreen.remove();
+  }
+  if (cameraBlindFlash && cameraBlindFlash.parentNode) {
+    cameraBlindFlash.remove();
+  }
+
+  appEl.classList.remove("hidden");
+  initMathBackgroundCanvas();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      appEl.classList.add("visible");
+    });
+  });
+}
 
 function runSplashSequence() {
   if (splashSequenceStarted) return;
   splashSequenceStarted = true;
 
-  AudioFX.init();
+AudioFX.init();
 
-  // Ocultar mensaje de indicación
-  if (audioStartPrompt) {
-    audioStartPrompt.style.opacity = "0";
-    audioStartPrompt.style.transition = "opacity 0.3s ease";
-  }
-
-  // FASE 1: Venado haciéndose ultrabrillante gradualmente con ondas de energía
-  if (splashDeerContainer) {
-    splashDeerContainer.classList.add("deer-glowing-phase");
-  }
-  AudioFX.playMathExpansion();
-
-  if (splashTextGroup) {
-    splashTextGroup.classList.add("slide-out-text");
-  }
-
-  // FASE 2: Pasar todo hacia un lado y activar la onda de luz
-  setTimeout(() => {
+requestAnimationFrame(() => {
     if (splashDeerContainer) {
-      splashDeerContainer.classList.add("deer-sweep-phase");
+      splashDeerContainer.classList.add("fade-in-luxury");
     }
-    if (splashEnergyShockwave) {
-      splashEnergyShockwave.classList.add("active");
+    if (splashTextGroup) {
+      splashTextGroup.classList.add("fade-in-text");
     }
-  }, 950);
+  });
 
-  // FASE 3: Transición fluida a la interfaz principal
-  setTimeout(() => {
-    if (splashScreen) splashScreen.classList.add("fade-out");
-    appEl.classList.remove("hidden");
-    
+setTimeout(() => {
+    if (splashCompleted) return;
+    if (splashDeerContainer) {
+      splashDeerContainer.classList.add("glowing");
+    }
+    if (splashTextGroup) {
+      splashTextGroup.classList.add("fade-out-text");
+    }
+  }, 3800);
+
+setTimeout(() => {
+    if (splashCompleted) return;
+    AudioFX.playMathExpansion();
+  }, 5300);
+
+setTimeout(() => {
+    if (splashCompleted) return;
+    if (cameraBlindFlash) {
+      cameraBlindFlash.classList.add("blind-active");
+    }
+  }, 5700);
+
+setTimeout(() => {
+    if (splashCompleted) return;
+    splashCompleted = true;
+
+if (splashScreen) {
+      splashScreen.classList.add("fade-out");
+      setTimeout(() => {
+        if (splashScreen && splashScreen.parentNode) {
+          splashScreen.remove();
+        }
+      }, 1000);
+    }
+
+appEl.classList.remove("hidden");
     initMathBackgroundCanvas();
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        
         appEl.classList.add("visible");
+
+if (cameraBlindFlash) {
+          cameraBlindFlash.classList.remove("blind-active");
+          cameraBlindFlash.classList.add("clearing");
+        }
       });
     });
 
-    setTimeout(() => {
-      if (splashScreen) splashScreen.remove();
-    }, 800);
-  }, 1750);
+setTimeout(() => {
+      if (cameraBlindFlash && cameraBlindFlash.parentNode) {
+        cameraBlindFlash.remove();
+      }
+    }, 1800);
+  }, 6400);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
 
-  if (splashScreen) {
-    splashScreen.addEventListener("pointerdown", () => {
-      runSplashSequence();
-    });
+  function handleTapToStart() {
+
+AudioFX.createContextInsideGesture();
+
+if (tapToStart) {
+      tapToStart.classList.add("hiding");
+      setTimeout(() => { if (tapToStart && tapToStart.parentNode) tapToStart.remove(); }, 500);
+    }
+
+setTimeout(runSplashSequence, 80);
+  }
+
+  if (tapToStart) {
+    tapToStart.addEventListener("pointerdown", handleTapToStart, { once: true });
+    tapToStart.addEventListener("click",        handleTapToStart, { once: true });
+  } else {
+    setTimeout(runSplashSequence, 100);
   }
 });
 
-/* 7) FUNCIONES AUXILIARES Y LÓGICA DE TABLERO */
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -663,7 +725,6 @@ function renderApp() {
   renderChart();
 }
 
-/* ESCUCHADORES DE FIREBASE */
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
   renderApp();
