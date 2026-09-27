@@ -222,7 +222,6 @@ function initMathBackgroundCanvas() {
     "e^iπ", "λ", "θ", "∇×F", "x²", "α", "β", "Ω", "E=mc²", "ϕ"
   ];
 
-  // Paleta vibrante y neón extendida
   const vibrantColors = [
     "#00f5ff", "#00ff88", "#ff007f", "#8b5cf6",
     "#ffe600", "#ff6600", "#3b82f6", "#ff3399"
@@ -261,7 +260,6 @@ function initMathBackgroundCanvas() {
         p.x = Math.random() * width;
       }
 
-      // Detección de proximidad al mouse (animación al pasar por encima)
       const dx = p.x - mouseX;
       const dy = p.y - mouseY;
       const dist = Math.hypot(dx, dy);
@@ -269,7 +267,6 @@ function initMathBackgroundCanvas() {
 
       if (dist < hoverRadius) {
         p.hoverProgress = Math.min(1, p.hoverProgress + 0.12);
-        // Empuje suave al rozar con el cursor
         const angle = Math.atan2(dy, dx);
         const pushForce = (hoverRadius - dist) / hoverRadius;
         p.x += Math.cos(angle) * pushForce * 2.2;
@@ -278,7 +275,6 @@ function initMathBackgroundCanvas() {
         p.hoverProgress = Math.max(0, p.hoverProgress - 0.05);
       }
 
-      // Transiciones suaves calculadas por el progreso del hover
       const currentSize = p.baseSize * (1 + p.hoverProgress * 0.9);
       const currentOpacity = p.baseOpacity + (1 - p.baseOpacity) * p.hoverProgress;
 
@@ -289,7 +285,6 @@ function initMathBackgroundCanvas() {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = currentOpacity;
 
-      // Efecto de resplandor intenso al interactuar
       if (p.hoverProgress > 0) {
         ctx.shadowColor = p.color;
         ctx.shadowBlur = 20 * p.hoverProgress;
@@ -299,7 +294,6 @@ function initMathBackgroundCanvas() {
       ctx.restore();
     });
 
-    // Partículas creadas por el rastro del mouse
     for (let i = mouseParticles.length - 1; i >= 0; i--) {
       const p = mouseParticles[i];
       p.x += p.vx;
@@ -329,36 +323,44 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) SECUENCIA DE CARGA DEL VENADO */
+/* 6) SECUENCIA DE ENTRADA OBLIGATORIA POR INTERACCIÓN */
 let splashSequenceStarted = false;
 
 function runSplashSequence() {
   if (splashSequenceStarted) return;
   splashSequenceStarted = true;
 
-  if (audioStartPrompt) audioStartPrompt.remove();
+  // 1. Inicializar Audio al instante de tocar/hacer clic
   AudioFX.init();
 
-  setTimeout(() => {
-    if (splashTextGroup) {
-      splashTextGroup.classList.add("slide-out");
-    }
-  }, 800);
+  // Ocultar botón de indicación de entrada
+  if (audioStartPrompt) {
+    audioStartPrompt.style.opacity = "0";
+    audioStartPrompt.style.transition = "opacity 0.3s ease";
+  }
 
+  // 2. Transición del texto
+  if (splashTextGroup) {
+    splashTextGroup.classList.add("slide-out");
+  }
+
+  // 3. Reproducir sonido y expansión del venado
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.add("expand-deer");
     }
     AudioFX.playMathExpansion();
-  }, 1500);
+  }, 400);
 
+  // 4. Contraer hacia el logo del header
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.remove("expand-deer");
       splashDeerContainer.classList.add("shrink-to-header");
     }
-  }, 2800);
+  }, 1800);
 
+  // 5. Ocultar Splash y mostrar App
   setTimeout(() => {
     if (splashScreen) splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -374,16 +376,13 @@ function runSplashSequence() {
     setTimeout(() => {
       if (splashScreen) splashScreen.remove();
     }, 700);
-  }, 3500);
+  }, 2500);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
 
-  setTimeout(() => {
-    runSplashSequence();
-  }, 300);
-
+  // Escuchar toque/clic en cualquier parte de la pantalla de carga
   if (splashScreen) {
     splashScreen.addEventListener("pointerdown", () => {
       runSplashSequence();
