@@ -84,7 +84,7 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; }
 input { font-family: inherit; }
 
 /* =====================================================
-   PANTALLA DE CARGA Y ANIMACIÓN DEL VENADO
+   PANTALLA DE CARGA Y ANIMACIÓN DEL VENADO CYBERPUNK
    ===================================================== */
 .splash-screen {
   position: fixed;
@@ -153,27 +153,26 @@ input { font-family: inherit; }
   text-align: center;
 }
 
-/* CONTENEDOR Y ESTILOS DEL SVG VECTORIAL */
+/* CONTENEDOR Y ANIMACIÓN SVG DEL VENADO */
 .splash-deer-container {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
   transform-origin: center center;
   will-change: transform, filter, opacity;
-  transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), filter 0.9s ease;
-  background: transparent !important;
+  transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), filter 0.9s ease, opacity 0.8s ease;
 }
 
 .cyber-deer-svg {
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 25px rgba(0, 245, 255, 0.8));
-  animation: deerGlowPulse 2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 25px rgba(0, 245, 255, 0.7));
+  animation: deerGlowPulse 2.5s ease-in-out infinite alternate;
 }
 
 @keyframes deerGlowPulse {
@@ -183,6 +182,34 @@ input { font-family: inherit; }
   100% {
     filter: drop-shadow(0 0 16px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(139, 92, 246, 0.9));
   }
+}
+
+/* Animación de trazado de líneas de circuito */
+.circuit-line {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: drawCircuit 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes drawCircuit {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Animación de pulsación de nodos LED */
+.node-pulse {
+  transform-origin: center;
+  animation: nodePulse 1.8s infinite ease-in-out alternate;
+}
+
+.node-pulse:nth-child(2n) { animation-delay: 0.3s; }
+.node-pulse:nth-child(3n) { animation-delay: 0.6s; }
+.node-pulse:nth-child(4n) { animation-delay: 0.9s; }
+
+@keyframes nodePulse {
+  0% { opacity: 0.3; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 6px #00f5ff); }
 }
 
 .splash-text-group {
@@ -207,12 +234,12 @@ input { font-family: inherit; }
 }
 
 .splash-deer-container.expand-deer {
-  transform: scale(2.4);
+  transform: scale(2.2);
   filter: drop-shadow(0 0 35px #ffffff) drop-shadow(0 0 70px rgba(0, 245, 255, 1));
 }
 
 .splash-deer-container.shrink-to-header {
-  transform: scale(0.25) translate(-700px, -900px);
+  transform: scale(0.2) translate(-50vw, -50vh);
   opacity: 0;
 }
 
