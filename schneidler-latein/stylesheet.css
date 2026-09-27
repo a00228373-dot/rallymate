@@ -1,0 +1,108 @@
+@font-face {
+    font-family: 'Schneidler Latein';
+    src: url('SchneidlerLatein-Regular.eot');
+    src: local('Schneidler Latein Regular'), local('SchneidlerLatein-Regular'),
+        url('SchneidlerLatein-Regular.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Regular.woff2') format('woff2'),
+        url('SchneidlerLatein-Regular.woff') format('woff'),
+        url('SchneidlerLatein-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein Subhead';
+    src: url('SchneidlerLatein-Subhead.eot');
+    src: local('Schneidler Latein Subhead'), local('SchneidlerLatein-Subhead'),
+        url('SchneidlerLatein-Subhead.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Subhead.woff2') format('woff2'),
+        url('SchneidlerLatein-Subhead.woff') format('woff'),
+        url('SchneidlerLatein-Subhead.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein';
+    src: url('SchneidlerLatein-Medium.eot');
+    src: local('Schneidler Latein Medium'), local('SchneidlerLatein-Medium'),
+        url('SchneidlerLatein-Medium.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Medium.woff2') format('woff2'),
+        url('SchneidlerLatein-Medium.woff') format('woff'),
+        url('SchneidlerLatein-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein';
+    src: url('SchneidlerLatein-Bold.eot');
+    src: local('Schneidler Latein Bold'), local('SchneidlerLatein-Bold'),
+        url('SchneidlerLatein-Bold.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Bold.woff2') format('woff2'),
+        url('SchneidlerLatein-Bold.woff') format('woff'),
+        url('SchneidlerLatein-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein Display';
+    src: url('SchneidlerLatein-Display.eot');
+    src: local('Schneidler Latein Display'), local('SchneidlerLatein-Display'),
+        url('SchneidlerLatein-Display.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Display.woff2') format('woff2'),
+        url('SchneidlerLatein-Display.woff') format('woff'),
+        url('SchneidlerLatein-Display.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein';
+    src: url('SchneidlerLatein-Heavy.eot');
+    src: local('Schneidler Latein Heavy'), local('SchneidlerLatein-Heavy'),
+        url('SchneidlerLatein-Heavy.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Heavy.woff2') format('woff2'),
+        url('SchneidlerLatein-Heavy.woff') format('woff'),
+        url('SchneidlerLatein-Heavy.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein Book';
+    src: url('SchneidlerLatein-Book.eot');
+    src: local('Schneidler Latein Book'), local('SchneidlerLatein-Book'),
+        url('SchneidlerLatein-Book.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Book.woff2') format('woff2'),
+        url('SchneidlerLatein-Book.woff') format('woff'),
+        url('SchneidlerLatein-Book.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein';
+    src: url('SchneidlerLatein-Thin.eot');
+    src: local('Schneidler Latein Thin'), local('SchneidlerLatein-Thin'),
+        url('SchneidlerLatein-Thin.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Thin.woff2') format('woff2'),
+        url('SchneidlerLatein-Thin.woff') format('woff'),
+        url('SchneidlerLatein-Thin.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Schneidler Latein Subtext';
+    src: url('SchneidlerLatein-Subtext.eot');
+    src: local('Schneidler Latein Subtext'), local('SchneidlerLatein-Subtext'),
+        url('SchneidlerLatein-Subtext.eot?#iefix') format('embedded-opentype'),
+        url('SchneidlerLatein-Subtext.woff2') format('woff2'),
+        url('SchneidlerLatein-Subtext.woff') format('woff'),
+        url('SchneidlerLatein-Subtext.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
