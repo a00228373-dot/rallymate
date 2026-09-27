@@ -29,15 +29,15 @@ const AudioFX = {
 
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(80, now);
-    osc.frequency.exponentialRampToValueAtTime(1600, now + 1.2);
+    osc.frequency.exponentialRampToValueAtTime(1800, now + 1.2);
 
     filter.type = "lowpass";
     filter.frequency.setValueAtTime(120, now);
-    filter.frequency.exponentialRampToValueAtTime(5000, now + 1.0);
-    filter.Q.setValueAtTime(8, now);
+    filter.frequency.exponentialRampToValueAtTime(6000, now + 1.0);
+    filter.Q.setValueAtTime(9, now);
 
     gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.35, now + 0.3);
+    gain.gain.linearRampToValueAtTime(0.4, now + 0.3);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
 
     osc.connect(filter);
@@ -51,10 +51,10 @@ const AudioFX = {
     const subGain = this.ctx.createGain();
     sub.type = "sine";
     sub.frequency.setValueAtTime(65, now);
-    sub.frequency.exponentialRampToValueAtTime(220, now + 0.2);
+    sub.frequency.exponentialRampToValueAtTime(240, now + 0.2);
     sub.frequency.exponentialRampToValueAtTime(30, now + 1.2);
 
-    subGain.gain.setValueAtTime(0.4, now);
+    subGain.gain.setValueAtTime(0.45, now);
     subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
 
     sub.connect(subGain);
@@ -141,33 +141,34 @@ const COLOR_PRESETS = [
 ];
 
 /* 4) ELEMENTOS DOM */
-const splashScreen        = document.getElementById("splashScreen");
-const splashDeerContainer = document.getElementById("splashDeerContainer");
-const splashTextGroup     = document.getElementById("splashTextGroup");
-const audioStartPrompt   = document.getElementById("audioStartPrompt");
+const splashScreen           = document.getElementById("splashScreen");
+const splashDeerContainer    = document.getElementById("splashDeerContainer");
+const splashTextGroup        = document.getElementById("splashTextGroup");
+const audioStartPrompt      = document.getElementById("audioStartPrompt");
+const splashEnergyShockwave = document.getElementById("splashEnergyShockwave");
 
-const appEl               = document.getElementById("app");
-const btnAddTeam          = document.getElementById("btnAddTeam");
-const teamsCounterEl      = document.getElementById("teamsCounter");
-const rankingListEl       = document.getElementById("rankingList");
-const emptyStateEl        = document.getElementById("emptyState");
-const chartEmptyEl        = document.getElementById("chartEmptyState");
+const appEl                  = document.getElementById("app");
+const btnAddTeam             = document.getElementById("btnAddTeam");
+const teamsCounterEl         = document.getElementById("teamsCounter");
+const rankingListEl          = document.getElementById("rankingList");
+const emptyStateEl           = document.getElementById("emptyState");
+const chartEmptyEl           = document.getElementById("chartEmptyState");
 
-const teamModal           = document.getElementById("teamModal");
-const modalTitle          = document.getElementById("modalTitle");
-const teamForm            = document.getElementById("teamForm");
-const teamIdInput         = document.getElementById("teamId");
-const teamNameInput       = document.getElementById("teamName");
-const teamColorInput      = document.getElementById("teamColor");
-const colorPresetsEl      = document.getElementById("colorPresets");
-const btnCloseModal       = document.getElementById("btnCloseModal");
-const btnDeleteTeam       = document.getElementById("btnDeleteTeam");
+const teamModal              = document.getElementById("teamModal");
+const modalTitle             = document.getElementById("modalTitle");
+const teamForm               = document.getElementById("teamForm");
+const teamIdInput            = document.getElementById("teamId");
+const teamNameInput          = document.getElementById("teamName");
+const teamColorInput         = document.getElementById("teamColor");
+const colorPresetsEl         = document.getElementById("colorPresets");
+const btnCloseModal          = document.getElementById("btnCloseModal");
+const btnDeleteTeam          = document.getElementById("btnDeleteTeam");
 
-const toastEl             = document.getElementById("toast");
-const statusDot           = document.getElementById("statusDot");
-const statusText          = document.getElementById("statusText");
-const chartCanvas         = document.getElementById("topChart");
-const cursorGlow          = document.getElementById("cursorGlow");
+const toastEl                = document.getElementById("toast");
+const statusDot              = document.getElementById("statusDot");
+const statusText             = document.getElementById("statusText");
+const chartCanvas            = document.getElementById("topChart");
+const cursorGlow             = document.getElementById("cursorGlow");
 
 /* 5) FONDO INTERACTIVO CON FÓRMULAS VIBRANTES Y ANIMADAS */
 let mouseX = -500;
@@ -323,44 +324,42 @@ function initMathBackgroundCanvas() {
   animate();
 }
 
-/* 6) SECUENCIA DE ENTRADA OBLIGATORIA POR INTERACCIÓN */
+/* 6) NUEVA SECUENCIA DE ANIMACIÓN DEL VENADO */
 let splashSequenceStarted = false;
 
 function runSplashSequence() {
   if (splashSequenceStarted) return;
   splashSequenceStarted = true;
 
-  // 1. Inicializar Audio al instante de tocar/hacer clic
   AudioFX.init();
 
-  // Ocultar botón de indicación de entrada
+  // Ocultar mensaje de indicación
   if (audioStartPrompt) {
     audioStartPrompt.style.opacity = "0";
     audioStartPrompt.style.transition = "opacity 0.3s ease";
   }
 
-  // 2. Transición del texto
+  // FASE 1: Venado haciéndose ultrabrillante gradualmente con ondas de energía
+  if (splashDeerContainer) {
+    splashDeerContainer.classList.add("deer-glowing-phase");
+  }
+  AudioFX.playMathExpansion();
+
   if (splashTextGroup) {
-    splashTextGroup.classList.add("slide-out");
+    splashTextGroup.classList.add("slide-out-text");
   }
 
-  // 3. Reproducir sonido y expansión del venado
+  // FASE 2: Pasar todo hacia un lado y activar la onda de luz
   setTimeout(() => {
     if (splashDeerContainer) {
-      splashDeerContainer.classList.add("expand-deer");
+      splashDeerContainer.classList.add("deer-sweep-phase");
     }
-    AudioFX.playMathExpansion();
-  }, 400);
-
-  // 4. Contraer hacia el logo del header
-  setTimeout(() => {
-    if (splashDeerContainer) {
-      splashDeerContainer.classList.remove("expand-deer");
-      splashDeerContainer.classList.add("shrink-to-header");
+    if (splashEnergyShockwave) {
+      splashEnergyShockwave.classList.add("active");
     }
-  }, 1800);
+  }, 950);
 
-  // 5. Ocultar Splash y mostrar App
+  // FASE 3: Transición fluida a la interfaz principal
   setTimeout(() => {
     if (splashScreen) splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
@@ -375,14 +374,13 @@ function runSplashSequence() {
 
     setTimeout(() => {
       if (splashScreen) splashScreen.remove();
-    }, 700);
-  }, 2500);
+    }, 800);
+  }, 1750);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   buildColorPresets();
 
-  // Escuchar toque/clic en cualquier parte de la pantalla de carga
   if (splashScreen) {
     splashScreen.addEventListener("pointerdown", () => {
       runSplashSequence();
