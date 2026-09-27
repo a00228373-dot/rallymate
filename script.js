@@ -23,7 +23,6 @@ const AudioFX = {
 
     const now = this.ctx.currentTime;
 
-    // Oscilador de barrido futurista sci-fi
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
@@ -48,7 +47,6 @@ const AudioFX = {
     osc.start(now);
     osc.stop(now + 1.5);
 
-    // Impacto sub-bass
     const sub = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
     sub.type = "sine";
@@ -288,14 +286,12 @@ function runSplashSequence() {
   if (audioStartPrompt) audioStartPrompt.remove();
   AudioFX.init();
 
-  // FASE 1 (0.8s): Texto se desplaza a la izquierda
   setTimeout(() => {
     if (splashTextGroup) {
       splashTextGroup.classList.add("slide-out");
     }
   }, 800);
 
-  // FASE 2 (1.5s): El venado se expande + Sonido futurista
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.add("expand-deer");
@@ -303,7 +299,6 @@ function runSplashSequence() {
     AudioFX.playMathExpansion();
   }, 1500);
 
-  // FASE 3 (2.8s): El venado se reduce y se traslada al encabezado
   setTimeout(() => {
     if (splashDeerContainer) {
       splashDeerContainer.classList.remove("expand-deer");
@@ -311,7 +306,6 @@ function runSplashSequence() {
     }
   }, 2800);
 
-  // FASE 4 (3.5s): Aparece el Dashboard
   setTimeout(() => {
     if (splashScreen) splashScreen.classList.add("fade-out");
     appEl.classList.remove("hidden");
