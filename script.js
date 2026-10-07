@@ -190,6 +190,10 @@ let hoverArmed = true;
 let lastAutoFocusAt = 0;
 let titleSwapTimer = null;
 let chartResizeTimer = null;
+let winnerOpen = false;
+let winnerTimers = [];
+let winnerCountRaf = null;
+let winnerCloseTimer = null;
 
 const COLOR_PRESETS = [
   "#00f5ff", "#8b5cf6", "#0057ff", "#ec4899",
@@ -248,6 +252,15 @@ const loginPassInput      = document.getElementById("loginPass");
 const loginErrorEl        = document.getElementById("loginError");
 const loginHintEl         = document.getElementById("loginHint");
 const btnCloseLogin       = document.getElementById("btnCloseLogin");
+
+const btnAssignWinner     = document.getElementById("btnAssignWinner");
+const winnerBackdrop      = document.getElementById("winnerBackdrop");
+const winnerOverlay       = document.getElementById("winnerOverlay");
+const winnerTitleEl       = document.getElementById("winnerTitle");
+const winnerTeamEl        = document.getElementById("winnerTeamName");
+const winnerScoreEl       = document.getElementById("winnerScore");
+const winnerConfettiEl    = document.getElementById("winnerConfetti");
+const btnCloseWinner      = document.getElementById("btnCloseWinner");
 
 const canHover = !!(window.matchMedia && window.matchMedia("(hover: hover)").matches);
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -633,7 +646,7 @@ function applySessionUI() {
   document.body.classList.toggle("role-admin", isAdmin());
   document.body.classList.toggle("role-team", isTeamUser());
   dashboardEl.classList.toggle("is-admin", isAdmin());
-  btnFocusToggle.classList.toggle("hidden", !isAdmin());
+  btnAssignWinner.classList.toggle("hidden", !isAdmin());
   updateAddButton();
 }
 
@@ -703,7 +716,7 @@ function logout() {
   promptTeamSetup = false;
   storeSession();
   closeModal();
-  setFocusMode(false, true);
+  closeWinnerOverlay(true);
   applySessionUI();
   renderApp();
   showToast("Sesión cerrada", "success");
@@ -885,7 +898,8 @@ btnDeleteTeam.addEventListener("click", () => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-  if (!loginModal.classList.contains("hidden")) closeLoginModal();
+  if (winnerOpen) closeWinnerOverlay();
+  else if (!loginModal.classList.contains("hidden")) closeLoginModal();
   else if (!teamModal.classList.contains("hidden")) closeModal();
   else if (focusMode) setFocusMode(false);
 });
@@ -1185,7 +1199,7 @@ function renderChart() {
 }
 
 /* ============================================================
-   VISTA TOP 5 (SOLO ADMIN): gráfica = Top 5, lista lateral = 6° en adelante
+   VISTA TOP 5 (PÚBLICA): gráfica = Top 5, lista lateral = 6° en adelante
    ============================================================ */
 function swapRankingTitle(text) {
   clearTimeout(titleSwapTimer);
@@ -1197,7 +1211,7 @@ function swapRankingTitle(text) {
 }
 
 function setFocusMode(on, silent = false) {
-  on = !!on && isAdmin();
+  on = !!on;
   if (on === focusMode) return;
   focusMode = on;
   if (!on) hoverArmed = false;
@@ -1219,7 +1233,7 @@ function setFocusMode(on, silent = false) {
 
 // Tras salir de la vista, el hover no la reactiva hasta que el cursor salga del encabezado
 rankingHeaderEl.addEventListener("mouseenter", () => {
-  if (!isAdmin() || focusMode || !canHover || !hoverArmed) return;
+  if (focusMode || !canHover || !hoverArmed) return;
   clearTimeout(focusHoverTimer);
   focusHoverTimer = setTimeout(() => {
     lastAutoFocusAt = Date.now();
@@ -1237,11 +1251,144 @@ document.addEventListener("mousemove", (e) => {
 });
 
 rankingHeaderEl.addEventListener("click", () => {
-  if (!isAdmin()) return;
   clearTimeout(focusHoverTimer);
   if (focusMode && Date.now() - lastAutoFocusAt < 1200) return;
   setFocusMode(!focusMode);
 });
+
+/* ============================================================
+   ANUNCIO DE GANADOR (SOLO ADMIN LO ACTIVA)
+   ============================================================ */
+const WINNER_TITLE_TEXT = "¡GANADORES!";
+
+function getCurrentWinners() {
+  if (!sortedTeams.length) return [];
+  const best = sortedTeams[0].score;
+  if (best <= 0) return [];
+  return sortedTeams.filter(team => team.score === best);
+}
+
+function buildWinnerTitle() {
+  winnerTitleEl.innerHTML = "";
+  Array.from(WINNER_TITLE_TEXT).forEach((char, index) => {
+    const span = document.createElement("span");
+    span.className = "winner-letter";
+    span.style.setProperty("--i", index);
+    span.textContent = char;
+    winnerTitleEl.appendChild(span);
+  });
+}
+
+function buildWinnerConfetti() {
+  winnerConfettiEl.innerHTML = "";
+  for (let i = 0; i < 70; i++) {
+    const piece = document.createElement("i");
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)];
+    piece.style.setProperty("--dx", `${(Math.random() - 0.5) * 220}px`);
+    piece.style.setProperty("--rot", `${360 + Math.random() * 720}deg`);
+    piece.style.setProperty("--dur", `${4 + Math.random() * 4}s`);
+    piece.style.setProperty("--delay", `${1.6 + Math.random() * 4}s`);
+    piece.style.width = `${6 + Math.random() * 6}px`;
+    piece.style.height = `${10 + Math.random() * 10}px`;
+    winnerConfettiEl.appendChild(piece);
+  }
+}
+
+function animateWinnerScore(target) {
+  cancelAnimationFrame(winnerCountRaf);
+  winnerScoreEl.textContent = "0";
+  const duration = 1800;
+  let startTime = null;
+
+  function step(now) {
+    if (startTime === null) startTime = now;
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    winnerScoreEl.textContent = String(Math.round(target * eased));
+    if (progress < 1) winnerCountRaf = requestAnimationFrame(step);
+  }
+
+  winnerTimers.push(setTimeout(() => { winnerCountRaf = requestAnimationFrame(step); }, 3100));
+}
+
+function openWinnerOverlay(winners) {
+  clearTimeout(winnerCloseTimer);
+  winnerTimers.forEach(clearTimeout);
+  winnerTimers = [];
+
+  const single = winners.length === 1;
+  const names = single
+    ? winners[0].name
+    : (winners.length <= 3 ? winners.map(team => team.name).join(" · ") : `${winners.length} equipos empatados`);
+
+  winnerTeamEl.textContent = names;
+  winnerScoreEl.textContent = "0";
+  winnerOverlay.style.setProperty("--winner-color", single ? winners[0].color : "#00f5ff");
+  buildWinnerTitle();
+  buildWinnerConfetti();
+
+  winnerOpen = true;
+  winnerBackdrop.classList.remove("hidden");
+  winnerOverlay.classList.remove("hidden", "show", "playing");
+  document.body.classList.add("winner-open");
+  void winnerOverlay.offsetWidth;
+  winnerOverlay.classList.add("playing");
+  requestAnimationFrame(() => {
+    winnerBackdrop.classList.add("show");
+    winnerOverlay.classList.add("show");
+  });
+
+  AudioFX.playMathExpansion();
+  triggerHaptic();
+  winnerTimers.push(setTimeout(() => AudioFX.playPointChime(true), 1500));
+  winnerTimers.push(setTimeout(() => AudioFX.playPointChime(true), 2600));
+  winnerTimers.push(setTimeout(() => AudioFX.playPointChime(true), 3400));
+  animateWinnerScore(winners[0].score);
+
+  setTimeout(() => { if (winnerOpen) btnCloseWinner.focus({ preventScroll: true }); }, 150);
+}
+
+function closeWinnerOverlay(immediate = false) {
+  if (!winnerOpen) return;
+  winnerOpen = false;
+  winnerTimers.forEach(clearTimeout);
+  winnerTimers = [];
+  cancelAnimationFrame(winnerCountRaf);
+
+  winnerBackdrop.classList.remove("show");
+  winnerOverlay.classList.remove("show");
+
+  const finish = () => {
+    winnerBackdrop.classList.add("hidden");
+    winnerOverlay.classList.add("hidden");
+    winnerOverlay.classList.remove("playing");
+    winnerConfettiEl.innerHTML = "";
+    document.body.classList.remove("winner-open");
+  };
+
+  clearTimeout(winnerCloseTimer);
+  if (immediate) finish();
+  else winnerCloseTimer = setTimeout(finish, 750);
+}
+
+function handleAssignWinner() {
+  if (!isAdmin()) {
+    showToast("Solo el administrador puede asignar ganador", "error");
+    return;
+  }
+  if (winnerOpen) return;
+
+  const winners = getCurrentWinners();
+  if (!winners.length) {
+    showToast("Aún no hay puntajes para declarar un ganador", "error");
+    return;
+  }
+  openWinnerOverlay(winners);
+}
+
+btnAssignWinner.addEventListener("click", handleAssignWinner);
+btnCloseWinner.addEventListener("click", () => closeWinnerOverlay());
 
 function renderApp() {
   recomputeSortedTeams();
