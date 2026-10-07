@@ -231,6 +231,9 @@
       </div>
       <div class="header-actions">
         <span class="teams-counter" id="teamsCounter">0 / 20 equipos</span>
+        <button type="button" id="btnAssignWinner" class="btn btn-gold interactive-btn hidden">
+          <span class="btn-icon" aria-hidden="true">🏆</span> Asignar Ganador
+        </button>
         <button id="btnAddTeam" class="btn btn-primary interactive-btn glow-cyan">
           <span class="btn-icon" id="btnAddTeamIcon" aria-hidden="true">+</span> <span id="btnAddTeamLabel">Agregar Equipo</span>
         </button>
@@ -254,7 +257,7 @@
         <div class="card-header-flex" id="rankingHeader">
           <h2 class="card-title" id="rankingTitle">Tabla General de Posiciones</h2>
           <div class="card-header-actions">
-            <button type="button" id="btnFocusToggle" class="focus-toggle hidden" aria-pressed="false"
+            <button type="button" id="btnFocusToggle" class="focus-toggle" aria-pressed="false"
               title="Pasa el cursor o haz clic para ver el Top 5 en la gráfica">Vista Top 5</button>
             <span class="card-badge">En tiempo real</span>
           </div>
@@ -339,6 +342,39 @@
           <button type="submit" class="btn btn-primary interactive-btn glow-cyan">Ingresar</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="winnerBackdrop" class="winner-backdrop hidden" aria-hidden="true"></div>
+
+  <div id="winnerOverlay" class="winner-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+    <div class="winner-fx" aria-hidden="true">
+      <div class="winner-rays"></div>
+      <div class="winner-flash"></div>
+      <div class="winner-confetti" id="winnerConfetti"></div>
+    </div>
+
+    <button type="button" id="btnCloseWinner" class="winner-close">Volver al Evento</button>
+
+    <div class="winner-stage">
+      <p class="winner-eyebrow">Rally de Matemáticas · Tec de Monterrey</p>
+
+      <div class="winner-deer-wrap">
+        <span class="winner-ring"></span>
+        <span class="winner-ring"></span>
+        <span class="winner-ring"></span>
+        <img src="venado.svg" alt="Logo Venado" class="winner-deer">
+      </div>
+
+      <h2 id="winnerTitle" class="winner-title" aria-label="¡GANADORES!">¡GANADORES!</h2>
+
+      <div class="winner-team-block">
+        <div id="winnerTeamName" class="winner-team"></div>
+        <div class="winner-score">
+          <span id="winnerScore" class="winner-score-num">0</span>
+          <span class="winner-score-label">puntos</span>
+        </div>
+      </div>
     </div>
   </div>
 
