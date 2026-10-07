@@ -205,6 +205,18 @@
 
   <div id="app" class="app hidden">
 
+    <div class="session-bar" id="sessionBar">
+      <button type="button" id="btnLogin" class="session-btn">Iniciar Sesión</button>
+      <div id="sessionInfo" class="session-info hidden">
+        <span class="session-chip" id="sessionChip">
+          <span class="session-dot"></span>
+          <span id="sessionUser"></span>
+          <span class="session-role" id="sessionRole"></span>
+        </span>
+        <button type="button" id="btnLogout" class="session-btn">Cerrar Sesión</button>
+      </div>
+    </div>
+
     <header class="app-header interactive-card">
       <div class="header-brand">
 
@@ -220,14 +232,14 @@
       <div class="header-actions">
         <span class="teams-counter" id="teamsCounter">0 / 20 equipos</span>
         <button id="btnAddTeam" class="btn btn-primary interactive-btn glow-cyan">
-          <span class="btn-icon" aria-hidden="true">+</span> Agregar Equipo
+          <span class="btn-icon" id="btnAddTeamIcon" aria-hidden="true">+</span> <span id="btnAddTeamLabel">Agregar Equipo</span>
         </button>
       </div>
     </header>
 
-    <main class="dashboard">
+    <main class="dashboard" id="dashboard">
 
-      <section class="card chart-card interactive-card">
+      <section class="card chart-card interactive-card" id="chartCard">
         <div class="card-header-flex">
           <h2 class="card-title">Top 5 Liderazgo</h2>
           <span class="card-badge">Estadísticas</span>
@@ -238,13 +250,18 @@
         <p id="chartEmptyState" class="empty-state">Aún no hay puntajes registrados.</p>
       </section>
 
-      <section class="card ranking-card interactive-card">
-        <div class="card-header-flex">
-          <h2 class="card-title">Tabla General de Posiciones</h2>
-          <span class="card-badge">En tiempo real</span>
+      <section class="card ranking-card interactive-card" id="rankingCard">
+        <div class="card-header-flex" id="rankingHeader">
+          <h2 class="card-title" id="rankingTitle">Tabla General de Posiciones</h2>
+          <div class="card-header-actions">
+            <button type="button" id="btnFocusToggle" class="focus-toggle hidden" aria-pressed="false"
+              title="Pasa el cursor o haz clic para ver el Top 5 en la gráfica">Vista Top 5</button>
+            <span class="card-badge">En tiempo real</span>
+          </div>
         </div>
         <div id="rankingList" class="ranking-list" aria-live="polite"></div>
         <p id="emptyState" class="empty-state">Aún no hay equipos registrados. ¡Agrega el primero!</p>
+        <p id="focusEmptyState" class="empty-state hidden">Aún no hay equipos del 6° lugar en adelante.</p>
       </section>
 
     </main>
@@ -267,6 +284,11 @@
       <form id="teamForm" class="modal-body">
         <input type="hidden" id="teamId" value="">
 
+        <div class="form-group" id="teamOwnerGroup">
+          <label for="teamSlot">Usuario asignado</label>
+          <select id="teamSlot"></select>
+        </div>
+
         <div class="form-group">
           <label for="teamName">Nombre / Número del equipo</label>
           <input type="text" id="teamName" placeholder="Ej. Equipo 07 - Los Infinitos" maxlength="32" required
@@ -284,6 +306,37 @@
         <div class="modal-footer">
           <button type="button" id="btnDeleteTeam" class="btn btn-danger glow-danger hidden">Eliminar equipo</button>
           <button type="submit" class="btn btn-primary interactive-btn glow-cyan">Guardar Equipo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="loginModal" class="modal-overlay hidden">
+    <div class="modal interactive-card" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <div class="modal-header">
+        <h3 id="loginTitle">Iniciar Sesión</h3>
+        <button type="button" id="btnCloseLogin" class="btn-close" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <form id="loginForm" class="modal-body" autocomplete="off">
+        <p id="loginHint" class="modal-hint">Ingresa con el usuario y la contraseña que te asignaron.</p>
+
+        <div class="form-group">
+          <label for="loginUser">Usuario</label>
+          <input type="text" id="loginUser" placeholder="Ej. equipo1" autocomplete="username" autocapitalize="none"
+            autocorrect="off" spellcheck="false" required>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPass">Contraseña</label>
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"
+            autocapitalize="none" autocorrect="off" spellcheck="false" required>
+        </div>
+
+        <p id="loginError" class="form-error hidden" role="alert">Usuario o contraseña incorrectos.</p>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary interactive-btn glow-cyan">Ingresar</button>
         </div>
       </form>
     </div>
