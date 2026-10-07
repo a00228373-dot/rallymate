@@ -145,6 +145,52 @@ let editingTeamId = null;
 let topChart = null;
 let isCanvasRunning = false;
 
+/* ============================================================
+   SESIÓN Y ROLES (locales, credenciales dentro del JS)
+   ============================================================ */
+const TOP_N = 5;
+const SESSION_KEY = "rallyMatematicasSession";
+
+const CREDENTIALS = {
+  CarlosReyna: { password: "9!nH2*MiDwms%X&5", role: "admin" },
+  equipo1: { password: "gato3044", role: "team" },
+  equipo2: { password: "lima5349", role: "team" },
+  equipo3: { password: "vela7454", role: "team" },
+  equipo4: { password: "oso9231", role: "team" },
+  equipo5: { password: "miel3485", role: "team" },
+  equipo6: { password: "mar8476", role: "team" },
+  equipo7: { password: "rio8387", role: "team" },
+  equipo8: { password: "lobo1702", role: "team" },
+  equipo9: { password: "trigo4495", role: "team" },
+  equipo10: { password: "nube4916", role: "team" },
+  equipo11: { password: "roca7133", role: "team" },
+  equipo12: { password: "luna7389", role: "team" },
+  equipo13: { password: "sol8009", role: "team" },
+  equipo14: { password: "pino3651", role: "team" },
+  equipo15: { password: "pez3559", role: "team" },
+  equipo16: { password: "coco4975", role: "team" },
+  equipo17: { password: "rayo1214", role: "team" },
+  equipo18: { password: "arco2772", role: "team" },
+  equipo19: { password: "pato5612", role: "team" },
+  equipo20: { password: "faro5873", role: "team" }
+};
+
+const TEAM_SLOTS = Object.keys(CREDENTIALS)
+  .filter(user => CREDENTIALS[user].role === "team")
+  .sort((a, b) => parseInt(a.replace(/\D/g, ""), 10) - parseInt(b.replace(/\D/g, ""), 10));
+
+let session = null;
+let teamsLoaded = false;
+let promptTeamSetup = false;
+let setupFromButton = false;
+let loginIntent = null;
+let focusMode = false;
+let focusHoverTimer = null;
+let hoverArmed = true;
+let lastAutoFocusAt = 0;
+let titleSwapTimer = null;
+let chartResizeTimer = null;
+
 const COLOR_PRESETS = [
   "#00f5ff", "#8b5cf6", "#0057ff", "#ec4899",
   "#10b981", "#f59e0b", "#f43f5e", "#ffffff"
@@ -178,6 +224,37 @@ const statusDot           = document.getElementById("statusDot");
 const statusText          = document.getElementById("statusText");
 const chartCanvas         = document.getElementById("topChart");
 const cursorGlow          = document.getElementById("cursorGlow");
+
+const dashboardEl         = document.getElementById("dashboard");
+const rankingHeaderEl     = document.getElementById("rankingHeader");
+const rankingTitleEl      = document.getElementById("rankingTitle");
+const btnFocusToggle      = document.getElementById("btnFocusToggle");
+const focusEmptyEl        = document.getElementById("focusEmptyState");
+
+const btnLogin            = document.getElementById("btnLogin");
+const btnLogout           = document.getElementById("btnLogout");
+const sessionInfoEl       = document.getElementById("sessionInfo");
+const sessionChipEl       = document.getElementById("sessionChip");
+const sessionUserEl       = document.getElementById("sessionUser");
+const sessionRoleEl       = document.getElementById("sessionRole");
+const btnAddTeamLabel     = document.getElementById("btnAddTeamLabel");
+const btnAddTeamIcon      = document.getElementById("btnAddTeamIcon");
+const teamSlotSelect      = document.getElementById("teamSlot");
+
+const loginModal          = document.getElementById("loginModal");
+const loginForm           = document.getElementById("loginForm");
+const loginUserInput      = document.getElementById("loginUser");
+const loginPassInput      = document.getElementById("loginPass");
+const loginErrorEl        = document.getElementById("loginError");
+const loginHintEl         = document.getElementById("loginHint");
+const btnCloseLogin       = document.getElementById("btnCloseLogin");
+
+const canHover = !!(window.matchMedia && window.matchMedia("(hover: hover)").matches);
+const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+function safeColor(color) {
+  return HEX_RE.test(String(color || "")) ? color : "#00f5ff";
+}
 
 let mouseX = -500;
 let mouseY = -500;
@@ -495,6 +572,186 @@ function highlightActiveSwatch() {
   });
 }
 
+/* ============================================================
+   SESIÓN LOCAL: inicio / cierre de sesión y permisos
+   ============================================================ */
+function findCredentialKey(input) {
+  const wanted = String(input || "").trim().toLowerCase();
+  return Object.keys(CREDENTIALS).find(user => user.toLowerCase() === wanted) || null;
+}
+
+function isAdmin() {
+  return !!session && session.role === "admin";
+}
+
+function isTeamUser() {
+  return !!session && session.role === "team";
+}
+
+function canControl(teamId) {
+  return isAdmin() || (isTeamUser() && session.username === teamId);
+}
+
+function freeSlots() {
+  return TEAM_SLOTS.filter(id => !teamsData[id]);
+}
+
+function loadStoredSession() {
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored && Object.prototype.hasOwnProperty.call(CREDENTIALS, stored)) {
+      return { username: stored, role: CREDENTIALS[stored].role };
+    }
+  } catch (_) {}
+  return null;
+}
+
+function storeSession() {
+  try {
+    if (session) localStorage.setItem(SESSION_KEY, session.username);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch (_) {}
+}
+
+function updateAddButton() {
+  const hasOwnTeam = isTeamUser() && !!teamsData[session.username];
+  btnAddTeamLabel.textContent = hasOwnTeam ? "Editar Mi Equipo" : "Agregar Equipo";
+  btnAddTeamIcon.textContent = hasOwnTeam ? "✎" : "+";
+}
+
+function applySessionUI() {
+  const logged = !!session;
+  btnLogin.classList.toggle("hidden", logged);
+  sessionInfoEl.classList.toggle("hidden", !logged);
+
+  if (logged) {
+    sessionUserEl.textContent = session.username;
+    sessionRoleEl.textContent = isAdmin() ? "ADMIN" : "EQUIPO";
+    sessionChipEl.classList.toggle("is-admin", isAdmin());
+  }
+
+  document.body.classList.toggle("role-admin", isAdmin());
+  document.body.classList.toggle("role-team", isTeamUser());
+  dashboardEl.classList.toggle("is-admin", isAdmin());
+  btnFocusToggle.classList.toggle("hidden", !isAdmin());
+  updateAddButton();
+}
+
+function openLoginModal(intent = null, hint = "") {
+  loginIntent = intent;
+  loginForm.reset();
+  loginErrorEl.classList.add("hidden");
+  loginHintEl.textContent = hint || "Ingresa con el usuario y la contraseña que te asignaron.";
+  loginModal.classList.remove("hidden");
+
+  AudioFX.playPop();
+  triggerHaptic();
+
+  setTimeout(() => loginUserInput.focus(), 50);
+}
+
+function closeLoginModal() {
+  loginModal.classList.add("hidden");
+  loginForm.reset();
+  loginErrorEl.classList.add("hidden");
+  loginIntent = null;
+}
+
+loginForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const key = findCredentialKey(loginUserInput.value);
+  const valid = key && CREDENTIALS[key].password === loginPassInput.value;
+
+  if (!valid) {
+    loginErrorEl.classList.remove("hidden");
+    const box = loginModal.querySelector(".modal");
+    box.classList.remove("shake");
+    void box.offsetWidth;
+    box.classList.add("shake");
+    AudioFX.playPointChime(false);
+    triggerHaptic();
+    loginPassInput.select();
+    return;
+  }
+
+  const intent = loginIntent;
+  session = { username: key, role: CREDENTIALS[key].role };
+  storeSession();
+  closeLoginModal();
+  applySessionUI();
+  renderApp();
+
+  AudioFX.playPointChime(true);
+  triggerHaptic();
+  showToast(isAdmin() ? "Sesión de administrador iniciada ✅" : `Sesión iniciada: ${key} ✅`, "success");
+
+  if (isAdmin()) {
+    if (intent === "addTeam") handleAddTeamClick();
+  } else {
+    promptTeamSetup = true;
+    setupFromButton = intent === "addTeam";
+    maybePromptTeamSetup();
+  }
+});
+
+btnCloseLogin.addEventListener("click", closeLoginModal);
+loginModal.addEventListener("click", (e) => { if (e.target === loginModal) closeLoginModal(); });
+btnLogin.addEventListener("click", () => openLoginModal());
+
+function logout() {
+  session = null;
+  promptTeamSetup = false;
+  storeSession();
+  closeModal();
+  setFocusMode(false, true);
+  applySessionUI();
+  renderApp();
+  showToast("Sesión cerrada", "success");
+}
+
+btnLogout.addEventListener("click", logout);
+
+function maybePromptTeamSetup() {
+  if (!promptTeamSetup || !teamsLoaded || !isTeamUser()) return;
+  promptTeamSetup = false;
+
+  if (teamsData[session.username]) {
+    if (setupFromButton) openEditModal(session.username);
+  } else {
+    openAddModal();
+  }
+  setupFromButton = false;
+}
+
+/* ============================================================
+   MODAL DE EQUIPO
+   ============================================================ */
+function populateSlotSelect(mode, currentId) {
+  let ids;
+  let locked;
+
+  if (mode === "edit") {
+    ids = [currentId];
+    locked = true;
+  } else if (isAdmin()) {
+    ids = freeSlots();
+    locked = false;
+  } else {
+    ids = [session.username];
+    locked = true;
+  }
+
+  teamSlotSelect.innerHTML = "";
+  ids.forEach(id => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = TEAM_SLOTS.includes(id) ? id : "Registro anterior (sin usuario)";
+    teamSlotSelect.appendChild(opt);
+  });
+  if (ids.length) teamSlotSelect.value = ids[0];
+  teamSlotSelect.disabled = locked;
+}
+
 function openAddModal() {
   editingTeamId = null;
   modalTitle.textContent = "Agregar Equipo";
@@ -502,9 +759,10 @@ function openAddModal() {
   teamNameInput.value = "";
   teamColorInput.value = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)];
   btnDeleteTeam.classList.add("hidden");
+  populateSlotSelect("new");
   highlightActiveSwatch();
   teamModal.classList.remove("hidden");
-  
+
   AudioFX.playPop();
   triggerHaptic();
 
@@ -514,12 +772,17 @@ function openAddModal() {
 function openEditModal(id) {
   const team = teamsData[id];
   if (!team) return;
+  if (!canControl(id)) {
+    showToast("No tienes permiso para editar este equipo", "error");
+    return;
+  }
   editingTeamId = id;
   modalTitle.textContent = "Editar Equipo";
   teamIdInput.value = id;
   teamNameInput.value = team.name;
-  teamColorInput.value = team.color;
-  btnDeleteTeam.classList.remove("hidden");
+  teamColorInput.value = safeColor(team.color);
+  btnDeleteTeam.classList.toggle("hidden", !isAdmin());
+  populateSlotSelect("edit", id);
   highlightActiveSwatch();
   teamModal.classList.remove("hidden");
 
@@ -535,13 +798,26 @@ function closeModal() {
   editingTeamId = null;
 }
 
-btnAddTeam.addEventListener("click", () => {
-  if (Object.keys(teamsData).length >= MAX_TEAMS) {
-    showToast(`Máximo ${MAX_TEAMS} equipos alcanzado`, "error");
+function handleAddTeamClick() {
+  if (!session) {
+    openLoginModal("addTeam", "Inicia sesión con tu usuario de equipo para registrar tu equipo.");
     return;
   }
-  openAddModal();
-});
+
+  if (isAdmin()) {
+    if (freeSlots().length === 0) {
+      showToast(`Máximo ${MAX_TEAMS} equipos alcanzado`, "error");
+      return;
+    }
+    openAddModal();
+    return;
+  }
+
+  if (teamsData[session.username]) openEditModal(session.username);
+  else openAddModal();
+}
+
+btnAddTeam.addEventListener("click", handleAddTeamClick);
 
 btnCloseModal.addEventListener("click", closeModal);
 teamModal.addEventListener("click", (e) => { if (e.target === teamModal) closeModal(); });
@@ -552,14 +828,37 @@ teamForm.addEventListener("submit", (e) => {
   const name = teamNameInput.value.trim();
   const color = teamColorInput.value;
 
+  if (!session) {
+    closeModal();
+    openLoginModal();
+    return;
+  }
+
   if (!name) { showToast("Ingresa un nombre de equipo", "error"); return; }
 
   if (editingTeamId) {
+    if (!canControl(editingTeamId)) {
+      showToast("No tienes permiso para editar este equipo", "error");
+      return;
+    }
     teamsRef.child(editingTeamId).update({ name, color })
       .then(() => { AudioFX.playPop(); showToast("Equipo actualizado ✅", "success"); closeModal(); })
       .catch(err => showToast("Error: " + err.message, "error"));
   } else {
-    teamsRef.push({
+    const id = teamSlotSelect.value;
+    if (!id || !TEAM_SLOTS.includes(id)) {
+      showToast("Selecciona un usuario de equipo disponible", "error");
+      return;
+    }
+    if (!canControl(id)) {
+      showToast("No tienes permiso para registrar este equipo", "error");
+      return;
+    }
+    if (teamsData[id]) {
+      showToast("Ese equipo ya está registrado", "error");
+      return;
+    }
+    teamsRef.child(id).set({
       name,
       color,
       score: 0,
@@ -572,6 +871,10 @@ teamForm.addEventListener("submit", (e) => {
 
 btnDeleteTeam.addEventListener("click", () => {
   if (!editingTeamId) return;
+  if (!isAdmin()) {
+    showToast("Solo el administrador puede eliminar equipos", "error");
+    return;
+  }
   const team = teamsData[editingTeamId];
   if (confirm(`¿Eliminar al equipo "${team ? team.name : ""}"?`)) {
     teamsRef.child(editingTeamId).remove()
@@ -580,8 +883,19 @@ btnDeleteTeam.addEventListener("click", () => {
   }
 });
 
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!loginModal.classList.contains("hidden")) closeLoginModal();
+  else if (!teamModal.classList.contains("hidden")) closeModal();
+  else if (focusMode) setFocusMode(false);
+});
+
 function adjustScore(id, delta) {
   if (!delta || isNaN(delta)) return;
+  if (!canControl(id)) {
+    showToast("No tienes permiso para modificar este equipo", "error");
+    return;
+  }
   const numDelta = Number(delta);
   AudioFX.playPointChime(numDelta >= 0);
   triggerHaptic();
@@ -591,7 +905,13 @@ function adjustScore(id, delta) {
 
 function recomputeSortedTeams() {
   sortedTeams = Object.entries(teamsData)
-    .map(([id, data]) => ({ id, ...data, score: Number(data.score) || 0 }))
+    .map(([id, data]) => ({
+      id,
+      ...data,
+      name: String(data.name || ""),
+      color: safeColor(data.color),
+      score: Number(data.score) || 0
+    }))
     .sort((a, b) => b.score - a.score);
 }
 
@@ -599,60 +919,206 @@ function renderCounter() {
   teamsCounterEl.textContent = `${Object.keys(teamsData).length} / ${MAX_TEAMS} equipos`;
 }
 
-function renderRanking() {
-  rankingListEl.innerHTML = "";
-  if (sortedTeams.length === 0) {
-    emptyStateEl.classList.remove("hidden");
+function createRowEl(team, animate) {
+  const row = document.createElement("div");
+  row.className = "team-row" + (animate ? " row-enter" : "");
+  row.dataset.id = team.id;
+  row.innerHTML = `
+    <span class="team-position"></span>
+    <span class="team-color-dot"></span>
+    <div class="team-info">
+      <div class="team-name"></div>
+      <div class="team-score"></div>
+    </div>
+  `;
+  return row;
+}
+
+function buildActionsHtml(perm) {
+  const deleteBtn = perm === "admin"
+    ? `<button type="button" class="icon-btn" title="Eliminar" data-action="delete">🗑</button>`
+    : "";
+
+  return `
+    <div class="row-icons">
+      <button type="button" class="icon-btn" title="Editar" data-action="edit">✎</button>
+      ${deleteBtn}
+    </div>
+    <div class="team-controls">
+      <button type="button" class="score-btn plus" data-action="delta" data-delta="1">+1</button>
+      <button type="button" class="score-btn plus" data-action="delta" data-delta="5">+5</button>
+      <button type="button" class="score-btn plus" data-action="delta" data-delta="10">+10</button>
+      <button type="button" class="score-btn minus" data-action="delta" data-delta="-1">-1</button>
+      <button type="button" class="score-btn minus" data-action="delta" data-delta="-5">-5</button>
+      <div class="custom-score">
+        <input type="number" placeholder="±#" data-role="custom-input">
+        <button type="button" class="btn-apply" data-action="apply-custom">Ok</button>
+      </div>
+    </div>
+  `;
+}
+
+function syncRowActions(row, perm) {
+  if (row.dataset.perm === perm) return;
+  row.dataset.perm = perm;
+  row.querySelectorAll(".row-icons, .team-controls").forEach(el => el.remove());
+  row.classList.remove("is-open");
+  if (perm !== "none") row.insertAdjacentHTML("beforeend", buildActionsHtml(perm));
+}
+
+function updateRowEl(row, team, rank) {
+  const color = team.color;
+  [1, 2, 3].forEach(n => row.classList.toggle(`rank-${n}`, rank === n));
+  row.classList.toggle("is-own", isTeamUser() && session.username === team.id);
+  row.style.setProperty("--team-hover-color", hexToRgba(color, 0.6));
+
+  row.querySelector(".team-position").textContent = `${rank}°`;
+
+  const dot = row.querySelector(".team-color-dot");
+  dot.style.background = color;
+  dot.style.color = color;
+
+  row.querySelector(".team-name").textContent = team.name;
+
+  const scoreEl = row.querySelector(".team-score");
+  scoreEl.style.color = color;
+  scoreEl.textContent = `${team.score} pts`;
+
+  if (row.dataset.score !== undefined && Number(row.dataset.score) !== team.score) {
+    scoreEl.classList.remove("score-bump");
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add("score-bump");
+    scoreEl.onanimationend = () => scoreEl.classList.remove("score-bump");
+  }
+  row.dataset.score = String(team.score);
+
+  const perm = !canControl(team.id) ? "none" : (isAdmin() ? "admin" : "own");
+  syncRowActions(row, perm);
+}
+
+function retireRow(row, animate) {
+  if (!animate) {
+    row.remove();
     return;
   }
-  emptyStateEl.classList.add("hidden");
+  const top = row.offsetTop;
+  row.style.top = `${top}px`;
+  row.style.left = "0";
+  row.style.right = "0";
+  row.classList.remove("row-enter", "row-enter-active", "rank-move", "is-open");
+  row.classList.add("row-leaving");
+  setTimeout(() => { if (row.parentNode) row.remove(); }, 520);
+}
 
-  sortedTeams.forEach((team, index) => {
-    const rank = index + 1;
-    const row = document.createElement("div");
-    row.className = "team-row";
-    if (rank <= 3) row.classList.add(`rank-${rank}`);
-    row.dataset.id = team.id;
-    row.style.setProperty("--team-hover-color", hexToRgba(team.color, 0.6));
+/* Reconciliación por id + FLIP: las filas existentes se mueven con
+   transform/transition, las nuevas entran y las que salen se desvanecen. */
+function syncRankList(container, entries) {
+  const animate = container.dataset.ready === "1";
+  const active = document.activeElement;
 
-    row.innerHTML = `
-      <span class="team-position">${rank}°</span>
-      <span class="team-color-dot" style="background:${team.color}; color:${team.color};"></span>
-      <div class="team-info">
-        <div class="team-name">${escapeHtml(team.name)}</div>
-        <div class="team-score" style="color:${team.color};">${team.score} pts</div>
-      </div>
-      <div class="row-icons">
-        <button class="icon-btn" title="Editar" data-action="edit">✎</button>
-        <button class="icon-btn" title="Eliminar" data-action="delete">🗑</button>
-      </div>
-      <div class="team-controls">
-        <button class="score-btn plus" data-action="delta" data-delta="1">+1</button>
-        <button class="score-btn plus" data-action="delta" data-delta="5">+5</button>
-        <button class="score-btn plus" data-action="delta" data-delta="10">+10</button>
-        <button class="score-btn minus" data-action="delta" data-delta="-5">-5</button>
-        <div class="custom-score">
-          <input type="number" placeholder="±#" data-role="custom-input">
-          <button class="btn-apply" data-action="apply-custom">Ok</button>
-        </div>
-      </div>
-    `;
-
-    rankingListEl.appendChild(row);
+  const existing = new Map();
+  Array.from(container.children).forEach(el => {
+    if (el.dataset.id && !el.classList.contains("row-leaving")) existing.set(el.dataset.id, el);
   });
+
+  const before = new Map();
+  existing.forEach((el, id) => before.set(id, el.offsetTop));
+
+  const wanted = new Set(entries.map(entry => entry.team.id));
+  Array.from(existing.entries()).forEach(([id, el]) => {
+    if (!wanted.has(id)) {
+      existing.delete(id);
+      retireRow(el, animate);
+    }
+  });
+
+  const created = [];
+  let cursor = container.firstElementChild;
+  entries.forEach(({ team, rank }) => {
+    let row = existing.get(team.id);
+    if (!row) {
+      row = createRowEl(team, animate);
+      created.push(row);
+    }
+    updateRowEl(row, team, rank);
+
+    while (cursor && cursor.classList.contains("row-leaving")) cursor = cursor.nextElementSibling;
+    if (row === cursor) cursor = cursor.nextElementSibling;
+    else container.insertBefore(row, cursor);
+  });
+
+  if (active && active !== document.activeElement && container.contains(active)) {
+    try { active.focus({ preventScroll: true }); } catch (_) {}
+  }
+
+  if (animate) {
+    const moved = [];
+    existing.forEach((row, id) => {
+      const delta = before.get(id) - row.offsetTop;
+      if (delta) moved.push([row, delta]);
+    });
+
+    moved.forEach(([row, delta]) => {
+      row.style.transition = "none";
+      row.style.transform = `translateY(${delta}px)`;
+    });
+    void container.offsetHeight;
+    moved.forEach(([row]) => {
+      row.style.transition = "";
+      row.classList.add("rank-move");
+      row.style.transform = "";
+    });
+    setTimeout(() => moved.forEach(([row]) => row.classList.remove("rank-move")), 700);
+
+    if (created.length) {
+      void container.offsetHeight;
+      created.forEach(row => {
+        row.classList.add("row-enter-active");
+        row.classList.remove("row-enter");
+      });
+      setTimeout(() => created.forEach(row => row.classList.remove("row-enter-active")), 700);
+    }
+  } else {
+    created.forEach(row => row.classList.remove("row-enter"));
+  }
+
+  if (entries.length > 0 && teamsLoaded) container.dataset.ready = "1";
+}
+
+function renderRanking() {
+  const hasTeams = sortedTeams.length > 0;
+  const entries = sortedTeams.map((team, index) => ({ team, rank: index + 1 }));
+  const visible = focusMode ? entries.filter(entry => entry.rank > TOP_N) : entries;
+
+  syncRankList(rankingListEl, visible);
+
+  emptyStateEl.classList.toggle("hidden", hasTeams);
+  focusEmptyEl.classList.toggle("hidden", !(focusMode && hasTeams && visible.length === 0));
 }
 
 rankingListEl.addEventListener("click", (e) => {
   const row = e.target.closest(".team-row");
-  if (!row) return;
+  if (!row || row.classList.contains("row-leaving")) return;
   const id = row.dataset.id;
   const actionEl = e.target.closest("[data-action]");
-  if (!actionEl) return;
+
+  if (!actionEl) {
+    if (focusMode && !e.target.closest("input")) row.classList.toggle("is-open");
+    return;
+  }
 
   const action = actionEl.dataset.action;
   if (action === "edit") openEditModal(id);
   else if (action === "delete") {
-    if (confirm("¿Eliminar este equipo?")) teamsRef.child(id).remove();
+    if (!isAdmin()) {
+      showToast("Solo el administrador puede eliminar equipos", "error");
+      return;
+    }
+    if (confirm("¿Eliminar este equipo?")) {
+      teamsRef.child(id).remove()
+        .then(() => showToast("Equipo eliminado", "success"))
+        .catch(err => showToast("Error: " + err.message, "error"));
+    }
   } else if (action === "delta") {
     adjustScore(id, actionEl.dataset.delta);
   } else if (action === "apply-custom") {
@@ -718,16 +1184,81 @@ function renderChart() {
   });
 }
 
+/* ============================================================
+   VISTA TOP 5 (SOLO ADMIN): gráfica = Top 5, lista lateral = 6° en adelante
+   ============================================================ */
+function swapRankingTitle(text) {
+  clearTimeout(titleSwapTimer);
+  rankingTitleEl.classList.add("is-swapping");
+  titleSwapTimer = setTimeout(() => {
+    rankingTitleEl.textContent = text;
+    rankingTitleEl.classList.remove("is-swapping");
+  }, 200);
+}
+
+function setFocusMode(on, silent = false) {
+  on = !!on && isAdmin();
+  if (on === focusMode) return;
+  focusMode = on;
+  if (!on) hoverArmed = false;
+
+  dashboardEl.classList.toggle("focus-mode", on);
+  btnFocusToggle.setAttribute("aria-pressed", on ? "true" : "false");
+  btnFocusToggle.textContent = on ? "Salir ✕" : "Vista Top 5";
+  swapRankingTitle(on ? "Posiciones 6° en adelante" : "Tabla General de Posiciones");
+  renderRanking();
+
+  if (!silent) {
+    AudioFX.playPop();
+    triggerHaptic();
+  }
+
+  clearTimeout(chartResizeTimer);
+  chartResizeTimer = setTimeout(() => { if (topChart) topChart.resize(); }, 800);
+}
+
+// Tras salir de la vista, el hover no la reactiva hasta que el cursor salga del encabezado
+rankingHeaderEl.addEventListener("mouseenter", () => {
+  if (!isAdmin() || focusMode || !canHover || !hoverArmed) return;
+  clearTimeout(focusHoverTimer);
+  focusHoverTimer = setTimeout(() => {
+    lastAutoFocusAt = Date.now();
+    setFocusMode(true);
+  }, 450);
+});
+
+rankingHeaderEl.addEventListener("mouseleave", () => {
+  clearTimeout(focusHoverTimer);
+  hoverArmed = true;
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!hoverArmed && !rankingHeaderEl.contains(e.target)) hoverArmed = true;
+});
+
+rankingHeaderEl.addEventListener("click", () => {
+  if (!isAdmin()) return;
+  clearTimeout(focusHoverTimer);
+  if (focusMode && Date.now() - lastAutoFocusAt < 1200) return;
+  setFocusMode(!focusMode);
+});
+
 function renderApp() {
   recomputeSortedTeams();
   renderCounter();
   renderRanking();
   renderChart();
+  updateAddButton();
 }
+
+session = loadStoredSession();
+applySessionUI();
 
 teamsRef.on("value", (snapshot) => {
   teamsData = snapshot.val() || {};
+  teamsLoaded = true;
   renderApp();
+  maybePromptTeamSetup();
 });
 
 db.ref(".info/connected").on("value", (snap) => {
