@@ -197,7 +197,7 @@ const TOP_N = 5;
 const SESSION_KEY = "rallyMatematicasSession";
 
 const CREDENTIALS = {
-  CarlosReyna: { password: "9!nH2*MiDwms%X&5", role: "admin" },
+  CarlosReyna: { password: "12345678", role: "admin" },
   equipo1: { password: "gato3044", role: "team" },
   equipo2: { password: "lima5349", role: "team" },
   equipo3: { password: "vela7454", role: "team" },
