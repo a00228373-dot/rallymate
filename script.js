@@ -1,5 +1,3 @@
-
-
 const AudioFX = {
   ctx: null,
 
@@ -118,6 +116,53 @@ createContextInsideGesture() {
 
       osc.start(now + index * 0.05);
       osc.stop(now + index * 0.05 + 0.3);
+    });
+  },
+
+  playTick(isFinal = false) {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(isFinal ? 1318.5 : 880, now);
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
+  },
+
+  playPhaseAlert(kind) {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const patterns = {
+      station:   [[880.00, 0], [659.25, 0.16], [880.00, 0.32], [659.25, 0.48]],
+      round:     [[523.25, 0], [659.25, 0.12], [783.99, 0.24], [1046.50, 0.36]],
+      finishing: [[783.99, 0], [659.25, 0.2], [523.25, 0.4], [392.00, 0.6]]
+    };
+
+    (patterns[kind] || patterns.round).forEach(([freq, offset]) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now + offset);
+
+      gain.gain.setValueAtTime(0.16, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.22);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.26);
     });
   }
 };
@@ -648,6 +693,7 @@ function applySessionUI() {
   dashboardEl.classList.toggle("is-admin", isAdmin());
   btnAssignWinner.classList.toggle("hidden", !isAdmin());
   updateAddButton();
+  updateTimerControls();
 }
 
 function openLoginModal(intent = null, hint = "") {
@@ -1397,6 +1443,412 @@ function renderApp() {
   renderChart();
   updateAddButton();
 }
+
+/* ============================================================
+   CRONÓMETRO SINCRONIZADO (Firebase Realtime Database · nodo "timer")
+
+   Estado guardado en Firebase:  { status, endsAt, round, by }
+     status  "station"   → Cambio de estación (1:30)
+             "round"     → Ronda en curso (5:00)
+             "finishing" → Rondas finalizadas: llegar al auditorio (1:30)
+             "closed"    → Cronómetro oculto
+             (sin nodo)  → Rally sin iniciar
+     endsAt  instante (ms, hora del SERVIDOR) en que termina la fase actual
+     round   rondas completadas / en curso
+
+   Las fases siguientes (estación → ronda → estación …) se DERIVAN de endsAt,
+   así todos los dispositivos cambian de fase solos y en el mismo instante,
+   sin depender de que el administrador siga conectado.
+   La hora local se corrige con .info/serverTimeOffset de Firebase.
+   ============================================================ */
+const timerRef = db.ref("timer");
+
+const STATION_MS = 90 * 1000;          // 1:30 · cambio de estación
+const ROUND_MS = 5 * 60 * 1000;        // 5:00 · ronda
+const FINISH_MS = 90 * 1000;           // 1:30 · llegar al auditorio
+const STATION_ADD_OPTIONS = [5, 10];   // segundos que cualquier usuario puede pedir
+const ADMIN_ADD_MAX_SECONDS = 3600;
+const TIMER_SOUNDS = true;             // pon false para silenciar avisos y cuenta final
+const TIMER_STATUSES = ["station", "round", "finishing", "closed"];
+
+const TIMER_PHASES = {
+  station: {
+    alert: "Cambio de estación",
+    label: "Tiempo para llegar a la estación",
+    tag: round => `Siguiente · Ronda ${round + 1}`,
+    toast: round => `Cambio de estación · siguiente: Ronda ${round + 1}`,
+    base: STATION_MS
+  },
+  round: {
+    alert: "",
+    label: "Ronda en curso",
+    tag: round => `Ronda ${round}`,
+    toast: round => `¡Ronda ${round} iniciada!`,
+    base: ROUND_MS
+  },
+  finishing: {
+    alert: "Rondas finalizadas",
+    label: "Tiempo para llegar al auditorio",
+    tag: () => "Fin del rally",
+    toast: () => "Rondas finalizadas · ¡Vamos al auditorio!",
+    base: FINISH_MS
+  }
+};
+
+const timerZoneEl         = document.getElementById("timerZone");
+const timerCardEl         = document.getElementById("timerCard");
+const timerRoundEl        = document.getElementById("timerRound");
+const timerAlertEl        = document.getElementById("timerAlert");
+const timerLabelEl        = document.getElementById("timerPhaseLabel");
+const timerDisplayEl      = document.getElementById("timerDisplay");
+const timerBonusEl        = document.getElementById("timerBonus");
+const timerProgressEl     = document.getElementById("timerProgressBar");
+const timerRequestEl      = document.getElementById("timerRequest");
+const timerRequestHintEl  = document.getElementById("timerRequestHint");
+const timerAdminEl        = document.getElementById("timerAdmin");
+const timerAdminStatusEl  = document.getElementById("timerAdminStatus");
+const btnTimerStart       = document.getElementById("btnTimerStart");
+const btnTimerFinish      = document.getElementById("btnTimerFinish");
+const btnTimerResume      = document.getElementById("btnTimerResume");
+const timerCustomInput    = document.getElementById("timerCustomSeconds");
+const btnTimerCustomAdd   = document.getElementById("btnTimerCustomAdd");
+
+let serverOffset = 0;
+let timerRaw = null;
+let timerLoaded = false;
+let timerPhaseKey = null;
+let timerPhaseEnds = 0;
+let timerPhaseTotal = 0;
+let timerLastSecond = null;
+let timerCooldownUntil = 0;
+let timerBonusHideTimer = null;
+
+function serverNow() {
+  return Date.now() + serverOffset;
+}
+
+function isTimerActive(status) {
+  return status === "station" || status === "round" || status === "finishing";
+}
+
+/* Devuelve el estado REAL en el instante `now`: avanza fases vencidas. */
+function normalizeTimer(raw, now) {
+  const idle = { status: "idle", endsAt: 0, round: 0 };
+  if (!raw || typeof raw !== "object" || !TIMER_STATUSES.includes(raw.status)) return idle;
+
+  const endsAt = Number(raw.endsAt);
+  if (!Number.isFinite(endsAt)) return idle;
+
+  let state = { status: raw.status, endsAt, round: Math.max(0, parseInt(raw.round, 10) || 0) };
+
+  for (let guard = 0; guard < 2000 && now >= state.endsAt; guard++) {
+    if (state.status === "station") {
+      state = { status: "round", endsAt: state.endsAt + ROUND_MS, round: state.round + 1 };
+    } else if (state.status === "round") {
+      state = { status: "station", endsAt: state.endsAt + STATION_MS, round: state.round };
+    } else if (state.status === "finishing") {
+      state = { status: "closed", endsAt: state.endsAt, round: state.round };
+    } else {
+      break;
+    }
+  }
+  return state;
+}
+
+function formatTimer(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+/* Cada carácter en su propia celda de ancho fijo: los dígitos no "bailan" */
+function setTimerDisplay(text) {
+  if (timerDisplayEl.dataset.text === text) return;
+  timerDisplayEl.dataset.text = text;
+  timerDisplayEl.innerHTML = Array.from(text)
+    .map(ch => ch === ":"
+      ? '<span class="t-colon">:</span>'
+      : `<span class="t-digit">${ch}</span>`)
+    .join("");
+}
+
+function showTimerBonus(deltaMs) {
+  const secs = Math.round(deltaMs / 1000);
+  timerBonusEl.textContent = secs < 60 ? `+${secs} s` : `+${formatTimer(deltaMs)}`;
+  timerBonusEl.classList.remove("show");
+  void timerBonusEl.offsetWidth;
+  timerBonusEl.classList.add("show");
+  clearTimeout(timerBonusHideTimer);
+  timerBonusHideTimer = setTimeout(() => timerBonusEl.classList.remove("show"), 2300);
+  if (TIMER_SOUNDS) AudioFX.playPop();
+}
+
+function announceTimerPhase(eff) {
+  if (eff.status === "closed") {
+    showToast("Cronómetro finalizado", "success");
+    return;
+  }
+  if (!isTimerActive(eff.status)) return;
+
+  showToast(TIMER_PHASES[eff.status].toast(eff.round), eff.status === "station" ? "error" : "success");
+  triggerHaptic();
+  if (TIMER_SOUNDS) AudioFX.playPhaseAlert(eff.status);
+}
+
+function timerAdminStatusText(eff) {
+  if (eff.status === "station") return `Cambio de estación · siguiente: Ronda ${eff.round + 1}`;
+  if (eff.status === "round") return `Ronda ${eff.round} en curso`;
+  if (eff.status === "finishing") return "Rumbo al auditorio";
+  if (eff.status === "closed") return "Rondas finalizadas";
+  return "Sin iniciar";
+}
+
+/* Botones y paneles que dependen de la sesión y de la fase actual */
+function updateTimerControls(eff) {
+  eff = eff || normalizeTimer(timerRaw, serverNow());
+  const active = isTimerActive(eff.status);
+  const admin = isAdmin();
+  const logged = !!session;
+
+  timerZoneEl.classList.toggle("hidden", !active && !admin);
+  timerAdminEl.classList.toggle("hidden", !admin);
+  timerAdminStatusEl.textContent = timerAdminStatusText(eff);
+
+  btnTimerStart.disabled = active;
+  btnTimerFinish.disabled = !(eff.status === "station" || eff.status === "round");
+  btnTimerResume.disabled = !(eff.status === "finishing" || eff.status === "closed");
+  timerAdminEl.querySelectorAll("[data-admin-add]").forEach(btn => { btn.disabled = !active; });
+  timerCustomInput.disabled = !active;
+  btnTimerCustomAdd.disabled = !active;
+
+  timerRequestEl.querySelectorAll("[data-add-seconds]").forEach(btn => { btn.disabled = !logged; });
+  timerRequestHintEl.textContent = logged
+    ? "El tiempo se suma al cronómetro de todos los equipos."
+    : "Inicia sesión para pedir más tiempo.";
+}
+
+/* Parte "estática" (cambia solo al cambiar de fase o de sesión) */
+function renderTimerStatic(eff) {
+  const active = isTimerActive(eff.status);
+
+  timerCardEl.classList.toggle("hidden", !active);
+  timerCardEl.dataset.phase = active ? eff.status : "idle";
+  timerBonusEl.classList.remove("show");
+
+  if (active) {
+    const meta = TIMER_PHASES[eff.status];
+    timerRoundEl.textContent = meta.tag(eff.round);
+    timerAlertEl.textContent = meta.alert;
+    timerAlertEl.classList.toggle("hidden", !meta.alert);
+    timerLabelEl.textContent = meta.label;
+    timerRequestEl.classList.toggle("hidden", eff.status !== "station");
+  } else {
+    timerDisplayEl.dataset.text = "";
+    timerCardEl.classList.remove("is-urgent");
+  }
+
+  updateTimerControls(eff);
+}
+
+/* Se ejecuta 10 veces por segundo; todo se calcula desde la hora del servidor */
+function tickTimer(force = false) {
+  if (!timerLoaded) return;
+
+  const now = serverNow();
+  const eff = normalizeTimer(timerRaw, now);
+  const key = `${eff.status}:${eff.round}`;
+  const active = isTimerActive(eff.status);
+  let changed = force;
+
+  if (key !== timerPhaseKey) {
+    const firstLoad = timerPhaseKey === null;
+    timerPhaseKey = key;
+    timerPhaseEnds = eff.endsAt;
+    timerPhaseTotal = active ? TIMER_PHASES[eff.status].base : 0;
+    timerLastSecond = null;
+    changed = true;
+    if (!firstLoad) announceTimerPhase(eff);
+  } else if (active && eff.endsAt - timerPhaseEnds > 250) {
+    showTimerBonus(eff.endsAt - timerPhaseEnds);
+    timerPhaseEnds = eff.endsAt;
+  } else {
+    timerPhaseEnds = eff.endsAt;
+  }
+
+  if (changed) renderTimerStatic(eff);
+  if (!active) return;
+
+  const remaining = Math.max(0, eff.endsAt - now);
+  const secs = Math.ceil(remaining / 1000);
+
+  timerPhaseTotal = Math.max(timerPhaseTotal, remaining);
+  setTimerDisplay(formatTimer(remaining));
+  timerProgressEl.style.width = `${timerPhaseTotal ? (remaining / timerPhaseTotal) * 100 : 0}%`;
+  timerCardEl.classList.toggle("is-urgent", secs <= 10);
+
+  if (secs !== timerLastSecond) {
+    if (TIMER_SOUNDS && timerLastSecond !== null && secs < timerLastSecond && secs >= 1 && secs <= 5) {
+      AudioFX.playTick(secs === 1);
+    }
+    timerLastSecond = secs;
+  }
+}
+
+/* Transacción atómica: todos escriben sobre el estado más reciente del servidor.
+   `mutate(estadoActual)` devuelve el nuevo estado o null para cancelar. */
+function runTimerTransaction(mutate, { onApplied, onRejected } = {}) {
+  let applied = false;
+
+  timerRef.transaction((current) => {
+    applied = false;
+    if (current === null) return current;   // sin datos locales aún: Firebase reintenta con el valor real
+    const next = mutate(normalizeTimer(current, serverNow()));
+    if (!next) return;                      // cancela la transacción
+    applied = true;
+    return {
+      status: next.status,
+      endsAt: next.endsAt,
+      round: next.round,
+      by: session ? session.username : ""
+    };
+  }, (err, committed) => {
+    if (err) {
+      showToast("Error: " + err.message, "error");
+      return;
+    }
+    if (committed && applied) { if (onApplied) onApplied(); }
+    else if (onRejected) onRejected();
+  }, false);
+}
+
+function requireTimerAdmin() {
+  if (!isAdmin()) {
+    showToast("Solo el administrador puede controlar el cronómetro", "error");
+    return false;
+  }
+  if (!timerLoaded) {
+    showToast("Conectando con el servidor…", "error");
+    return false;
+  }
+  return true;
+}
+
+/* ---- Acciones del administrador (CarlosReyna) ---- */
+function startRally() {
+  if (!requireTimerAdmin()) return;
+  if (isTimerActive(normalizeTimer(timerRaw, serverNow()).status)) {
+    showToast("El rally ya está en curso", "error");
+    return;
+  }
+  timerRef.set({
+    status: "station",
+    endsAt: serverNow() + STATION_MS,
+    round: 0,
+    by: session.username
+  }).catch(err => showToast("Error: " + err.message, "error"));
+}
+
+function finishRounds() {
+  if (!requireTimerAdmin()) return;
+  if (!confirm("¿Finalizar las rondas? Todos tendrán 1:30 para llegar al auditorio.")) return;
+
+  runTimerTransaction(
+    s => (s.status === "station" || s.status === "round")
+      ? { status: "finishing", endsAt: serverNow() + FINISH_MS, round: s.round }
+      : null,
+    { onRejected: () => showToast("No hay rondas en curso para finalizar", "error") }
+  );
+}
+
+function resumeRounds() {
+  if (!requireTimerAdmin()) return;
+
+  runTimerTransaction(
+    s => (s.status === "finishing" || s.status === "closed")
+      ? { status: "station", endsAt: serverNow() + STATION_MS, round: s.round }
+      : null,
+    { onRejected: () => showToast("Las rondas ya están en curso", "error") }
+  );
+}
+
+function adminAddTime(seconds, onDone) {
+  if (!requireTimerAdmin()) return;
+  if (!Number.isInteger(seconds) || seconds < 1 || seconds > ADMIN_ADD_MAX_SECONDS) {
+    showToast(`Ingresa entre 1 y ${ADMIN_ADD_MAX_SECONDS} segundos`, "error");
+    return;
+  }
+
+  runTimerTransaction(
+    s => isTimerActive(s.status) ? { ...s, endsAt: s.endsAt + seconds * 1000 } : null,
+    {
+      onApplied: () => { if (onDone) onDone(); },
+      onRejected: () => showToast("No hay un cronómetro activo", "error")
+    }
+  );
+}
+
+/* ---- Cualquier usuario con sesión: +5 s / +10 s solo en "Cambio de estación" ---- */
+function requestStationTime(seconds) {
+  if (!session) {
+    showToast("Inicia sesión para pedir más tiempo", "error");
+    return;
+  }
+  if (!STATION_ADD_OPTIONS.includes(seconds)) return;
+
+  const t = Date.now();
+  if (t < timerCooldownUntil) return;
+  timerCooldownUntil = t + 600;
+
+  runTimerTransaction(
+    s => s.status === "station" ? { ...s, endsAt: s.endsAt + seconds * 1000 } : null,
+    {
+      onApplied: () => { triggerHaptic(); showToast(`+${seconds} segundos para todos ⏱️`, "success"); },
+      onRejected: () => showToast("Solo se puede pedir tiempo durante el cambio de estación", "error")
+    }
+  );
+}
+
+btnTimerStart.addEventListener("click", startRally);
+btnTimerFinish.addEventListener("click", finishRounds);
+btnTimerResume.addEventListener("click", resumeRounds);
+
+timerRequestEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-add-seconds]");
+  if (!btn || btn.disabled) return;
+  requestStationTime(Number(btn.dataset.addSeconds));
+});
+
+timerAdminEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-admin-add]");
+  if (!btn || btn.disabled) return;
+  adminAddTime(Number(btn.dataset.adminAdd));
+});
+
+function applyCustomTimerAdd() {
+  const seconds = Number(timerCustomInput.value);
+  adminAddTime(seconds, () => { timerCustomInput.value = ""; });
+}
+
+btnTimerCustomAdd.addEventListener("click", applyCustomTimerAdd);
+timerCustomInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); applyCustomTimerAdd(); }
+});
+
+db.ref(".info/serverTimeOffset").on("value", (snap) => {
+  serverOffset = Number(snap.val()) || 0;
+  tickTimer(true);
+});
+
+timerRef.on("value", (snap) => {
+  timerRaw = snap.val();
+  timerLoaded = true;
+  tickTimer();
+}, (err) => showToast("Cronómetro: " + err.message, "error"));
+
+setInterval(() => tickTimer(), 100);
+document.addEventListener("visibilitychange", () => tickTimer());
+window.addEventListener("focus", () => tickTimer());
 
 session = loadStoredSession();
 applySessionUI();
