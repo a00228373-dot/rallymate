@@ -240,6 +240,67 @@
       </div>
     </header>
 
+    <!-- ============================================================
+         CRONÓMETRO SINCRONIZADO (centro de la interfaz)
+         ============================================================ -->
+    <section class="timer-zone hidden" id="timerZone" aria-label="Cronómetro del rally">
+
+      <div class="timer-card card hidden" id="timerCard" data-phase="idle">
+        <div class="timer-meta">
+          <span class="timer-round" id="timerRound">Ronda 1</span>
+          <span class="timer-sync"><span class="pulse-ring"></span> SINCRONIZADO</span>
+        </div>
+
+        <div class="timer-alert" id="timerAlert" role="alert">Cambio de estación</div>
+        <p class="timer-phase-label" id="timerPhaseLabel">Tiempo para llegar a la estación</p>
+
+        <div class="timer-display-wrap">
+          <div class="timer-display" id="timerDisplay" role="timer" aria-live="off">1:30</div>
+          <span class="timer-bonus" id="timerBonus" aria-hidden="true"></span>
+        </div>
+
+        <div class="timer-progress" aria-hidden="true"><span id="timerProgressBar"></span></div>
+
+        <div class="timer-request hidden" id="timerRequest">
+          <p class="timer-request-label">¿Necesitas más tiempo para llegar?</p>
+          <div class="timer-request-btns">
+            <button type="button" class="timer-add-btn interactive-btn" data-add-seconds="5">+5 s</button>
+            <button type="button" class="timer-add-btn interactive-btn" data-add-seconds="10">+10 s</button>
+          </div>
+          <p class="timer-hint" id="timerRequestHint"></p>
+        </div>
+      </div>
+
+      <div class="timer-admin card hidden" id="timerAdmin">
+        <div class="card-header-flex">
+          <h2 class="card-title">Control del cronómetro</h2>
+          <span class="card-badge" id="timerAdminStatus">Sin iniciar</span>
+        </div>
+
+        <div class="timer-admin-row">
+          <button type="button" id="btnTimerStart" class="btn btn-primary interactive-btn glow-cyan">▶ Iniciar rally</button>
+          <button type="button" id="btnTimerFinish" class="btn btn-danger interactive-btn">Finalizar rondas</button>
+          <button type="button" id="btnTimerResume" class="btn btn-resume interactive-btn">Reanudar rondas</button>
+        </div>
+
+        <div class="timer-admin-add">
+          <span class="timer-admin-label">Añadir tiempo a todos</span>
+          <div class="timer-admin-add-btns">
+            <button type="button" class="score-btn plus" data-admin-add="30">+30 s</button>
+            <button type="button" class="score-btn plus" data-admin-add="60">+1 min</button>
+            <button type="button" class="score-btn plus" data-admin-add="120">+2 min</button>
+            <button type="button" class="score-btn plus" data-admin-add="300">+5 min</button>
+          </div>
+          <div class="custom-score">
+            <input type="number" id="timerCustomSeconds" min="1" max="3600" step="1" inputmode="numeric"
+              placeholder="Segundos" aria-label="Segundos a añadir">
+            <button type="button" id="btnTimerCustomAdd" class="btn-apply">Añadir</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
     <main class="dashboard" id="dashboard">
 
       <section class="card chart-card interactive-card" id="chartCard">
