@@ -2149,3 +2149,397 @@ body.winner-open .math-bg-canvas {
     flex-wrap: wrap;
   }
 }
+
+
+/* ============================================================
+   CRONÓMETRO SINCRONIZADO
+   ============================================================ */
+.timer-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto 20px;
+}
+
+.timer-card {
+  --timer-accent: #00f5ff;
+  --timer-rgb: 0, 245, 255;
+  position: relative;
+  width: 100%;
+  padding: 18px 16px 22px;
+  text-align: center;
+  border-color: rgba(var(--timer-rgb), 0.4);
+  box-shadow: var(--shadow-card), 0 0 44px rgba(var(--timer-rgb), 0.16);
+  transition: border-color 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+  animation: timerCardIn 0.7s var(--ease-out);
+}
+
+.timer-card[data-phase="station"] {
+  --timer-accent: #ff3b4e;
+  --timer-rgb: 255, 59, 78;
+}
+
+.timer-card[data-phase="finishing"] {
+  --timer-accent: #f59e0b;
+  --timer-rgb: 245, 158, 11;
+}
+
+@keyframes timerCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.timer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.timer-round {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--timer-accent);
+  background: rgba(var(--timer-rgb), 0.1);
+  border: 1px solid rgba(var(--timer-rgb), 0.35);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  transition: color 0.5s, background 0.5s, border-color 0.5s;
+}
+
+.timer-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--success);
+}
+
+.timer-alert {
+  display: inline-block;
+  max-width: 100%;
+  margin: 4px auto 8px;
+  padding: 10px 26px;
+  border-radius: var(--radius-full);
+  font-size: clamp(16px, 4.6vw, 26px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 28px -6px rgba(239, 68, 68, 0.75);
+  animation: timerAlertPulse 1.3s ease-in-out infinite;
+}
+
+.timer-card[data-phase="finishing"] .timer-alert {
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+  box-shadow: 0 8px 28px -6px rgba(245, 158, 11, 0.75);
+}
+
+@keyframes timerAlertPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 8px 28px -6px rgba(var(--timer-rgb), 0.75), 0 0 0 0 rgba(var(--timer-rgb), 0.55);
+  }
+
+  60% {
+    transform: scale(1.03);
+    box-shadow: 0 8px 28px -6px rgba(var(--timer-rgb), 0.75), 0 0 0 16px rgba(var(--timer-rgb), 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 28px -6px rgba(var(--timer-rgb), 0.75), 0 0 0 0 rgba(var(--timer-rgb), 0);
+  }
+}
+
+.timer-phase-label {
+  margin: 0;
+  font-size: clamp(12px, 3vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.timer-display-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 12px;
+}
+
+.timer-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  font-size: clamp(76px, 21vw, 176px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(var(--timer-rgb), 0.75), 0 0 60px rgba(var(--timer-rgb), 0.35);
+  transition: text-shadow 0.5s var(--ease-out);
+}
+
+.t-digit {
+  display: inline-block;
+  width: 0.62em;
+  text-align: center;
+}
+
+.t-colon {
+  display: inline-block;
+  width: 0.32em;
+  text-align: center;
+  transform: translateY(-0.06em);
+}
+
+.timer-card.is-urgent .timer-display {
+  animation: timerUrgent 1s ease-in-out infinite;
+}
+
+@keyframes timerUrgent {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.04);
+    text-shadow: 0 0 30px rgba(var(--timer-rgb), 1), 0 0 80px rgba(var(--timer-rgb), 0.6);
+  }
+}
+
+.timer-bonus {
+  position: absolute;
+  top: 0;
+  right: clamp(0px, 4vw, 40px);
+  font-size: clamp(18px, 5vw, 30px);
+  font-weight: 800;
+  color: var(--success);
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.timer-bonus.show {
+  animation: timerBonusFloat 2.2s var(--ease-out) forwards;
+}
+
+@keyframes timerBonusFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.8);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1);
+  }
+}
+
+.timer-progress {
+  width: min(560px, 92%);
+  height: 8px;
+  margin: 0 auto;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.timer-progress>span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(var(--timer-rgb), 0.55), var(--timer-accent));
+  box-shadow: 0 0 14px rgba(var(--timer-rgb), 0.8);
+  transition: width 0.15s linear;
+}
+
+.timer-request {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.timer-request-label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.timer-request-btns {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.timer-add-btn {
+  min-height: 52px;
+  min-width: 112px;
+  padding: 0 28px;
+  border-radius: var(--radius-full);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  background: rgba(255, 59, 78, 0.16);
+  border: 1px solid rgba(255, 59, 78, 0.6);
+}
+
+.timer-add-btn:hover:not(:disabled),
+.timer-add-btn:active:not(:disabled) {
+  transform: scale(1.08);
+  background: rgba(255, 59, 78, 0.32);
+  box-shadow: 0 0 22px rgba(255, 59, 78, 0.7);
+}
+
+.timer-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.timer-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Panel del administrador */
+.timer-admin {
+  width: 100%;
+}
+
+.timer-admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timer-admin-row .btn {
+  flex: 1 1 150px;
+}
+
+.timer-admin-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.timer-admin-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.timer-admin-add-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timer-admin-add-btns .score-btn {
+  flex: 1 1 64px;
+}
+
+.timer-admin .custom-score {
+  width: 100%;
+  margin-top: 0;
+}
+
+.timer-admin .custom-score input {
+  width: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.btn-resume {
+  background: rgba(16, 185, 129, 0.16);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+
+.btn-resume:hover:not(:disabled),
+.btn-resume:active:not(:disabled) {
+  transform: scale(1.06);
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.75);
+  filter: brightness(1.2);
+}
+
+.timer-admin .btn-danger:hover:not(:disabled),
+.timer-admin .btn-danger:active:not(:disabled) {
+  transform: scale(1.06);
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.7);
+  filter: brightness(1.2);
+}
+
+.btn:disabled,
+.score-btn:disabled,
+.btn-apply:disabled,
+.custom-score input:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.btn:disabled,
+.btn:disabled:hover,
+.btn:disabled:active,
+.score-btn:disabled,
+.score-btn:disabled:hover,
+.score-btn:disabled:active {
+  transform: none !important;
+  box-shadow: none !important;
+  filter: grayscale(0.5) !important;
+}
+
+@media (min-width: 640px) {
+  .timer-card {
+    padding: 24px 28px 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .timer-card,
+  .timer-alert,
+  .timer-card.is-urgent .timer-display,
+  .timer-bonus.show {
+    animation-duration: 0.01s;
+    animation-iteration-count: 1;
+  }
+
+  .timer-progress>span {
+    transition: none;
+  }
+}
